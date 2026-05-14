@@ -4,8 +4,6 @@
 
 ## Latest Version: v0.4.5
 
-**SynkOS** is the operational layer for multi-agent AI development. It integrates MCP as internal contract, squads as traceable execution units, stories as planning primitives, vault/wiki as persistent memory, and a UI for observability and operational control.
-
 ---
 
 ## Downloads
@@ -19,7 +17,6 @@
 
 **Installation (AppImage):**
 ```bash
-# Download and make executable
 chmod +x SynkOS-0.4.5.AppImage
 ./SynkOS-0.4.5.AppImage
 ```
@@ -46,6 +43,34 @@ chmod +x SynkOS-0.4.5.AppImage
 **Installation:**
 1. Run the installer or extract the ZIP
 2. Launch `SynkOS.exe`
+
+---
+
+## Skills
+
+SynkOS agent skills are installed via the [skills.sh](https://www.skills.sh) CLI:
+
+```bash
+npx skills add <skill-name>
+```
+
+Available skills:
+
+| Skill | Description |
+|-------|-------------|
+| `synko-dev` | General development agent |
+| `synko-architect` | Architecture and design decisions |
+| `synko-qa` | Quality assurance and testing |
+| `synko-sm` | Scrum master and process management |
+| `synko-analyst` | Requirements analysis |
+| `synko-po` | Product owner and backlog management |
+| `synko-pm` | Project management |
+| `synko-data-engineer` | Data engineering workflows |
+| `synko-devops` | DevOps and infrastructure |
+| `synko-ux-design-expert` | UX design and research |
+| `clean-code-architect` | Code quality and clean architecture |
+| `impeccable` | Frontend design and UI polish |
+| `ui-ux-pro-max` | Advanced UI/UX design system |
 
 ---
 
@@ -99,18 +124,6 @@ MCP_CONFIG_PATH=/path/to/mcp.json
 
 ---
 
-## Resources
-
-- **Documentation:** See `docs/` in source repository
-- **Issues:** Report at github.com/ggailabs/synkos/issues
-- **Releases:** github.com/ggailabs/synkos/releases
-
----
-
 ## License
 
 Copyright (c) 2025 GG.AI Labs. All rights reserved.
-
----
-
-*Built with Electron + React + TypeScript. Powered by MCP.*
