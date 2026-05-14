@@ -114,10 +114,6 @@ Available skills:
 Create a `.env` file in the application directory or set environment variables:
 
 ```bash
-# Supabase (for cloud persistence)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
-
 # Optional: Custom MCP servers
 MCP_CONFIG_PATH=/path/to/mcp.json
 ```
