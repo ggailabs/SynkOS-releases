@@ -2,7 +2,9 @@
 
 > Multi-agent terminal orchestrator for AI-powered development workflows
 
-## Latest Version: v0.4.5
+## Latest Version: v0.7.7
+
+**SynkOS** is the operational layer for multi-agent AI development. It integrates MCP as internal contract, squads as traceable execution units, stories as planning primitives, vault/wiki as persistent memory, and a UI for observability and operational control.
 
 ---
 
@@ -12,24 +14,29 @@
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-0.4.5.AppImage` | ~155 MB | Universal Linux executable (recommended) |
-| `linux-unpacked/` | - | Extracted application directory |
+| `SynkOS-0.7.7.AppImage` | ~150 MB | Universal Linux executable (recommended) |
+| `synko_0.7.7_amd64.deb` | ~124 MB | Debian/Ubuntu installation package |
 
 **Installation (AppImage):**
 ```bash
-chmod +x SynkOS-0.4.5.AppImage
-./SynkOS-0.4.5.AppImage
+# Download and make executable
+chmod +x SynkOS-0.7.7.AppImage
+./SynkOS-0.7.7.AppImage
+```
+
+**Installation (Debian/Ubuntu):**
+```bash
+sudo dpkg -i synko_0.7.7_amd64.deb
 ```
 
 ### macOS
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-0.4.5.dmg` | ~160 MB | macOS Disk Image |
-| `mac/SynkOS.app` | - | Extracted application bundle |
+| `SynkOS-0.7.7.dmg` | ~160 MB | macOS Disk Image |
 
 **Installation:**
-1. Open the `.dmg` file
+1. Open the `.dmg` file (or build locally on macOS)
 2. Drag `SynkOS.app` to Applications
 3. First launch: Right-click → Open (bypass Gatekeeper)
 
@@ -37,12 +44,11 @@ chmod +x SynkOS-0.4.5.AppImage
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-Setup-0.4.5.exe` | ~150 MB | Windows Installer |
-| `SynkOS-0.4.5-win.zip` | ~150 MB | Portable ZIP |
+| `SynkOS.Setup.0.7.7.exe` | ~121 MB | Windows Installer |
 
 **Installation:**
-1. Run the installer or extract the ZIP
-2. Launch `SynkOS.exe`
+1. Run `SynkOS.Setup.0.7.7.exe` installer
+2. Complete steps and launch **SynkOS**
 
 ---
 
@@ -89,23 +95,20 @@ Available skills:
 
 ---
 
-## What's New in v0.4.5
+## What's New in v0.7.7
 
-### Features
-- Multi-agent pane orchestration with real-time synchronization
-- Story-driven development workflow with backlog integration
-- Persistent vault/wiki memory across sessions
-- MCP server integration for extensible capabilities
-- Role-based agent squads (dev, architect, qa, sm, analyst, po, data-engineer, ux-design-expert)
+### Highlights
+- **Direct Agent Pane Spawning**: Added new MCP tools (`pane_open_terminal`, `pane_open_browser`, `pane_open_external`) that allow running agents to trigger and manage visual panes in the SynkOS dashboard.
+- **Browser URL State Persistence**: Solved the UI layout bug so that moving or resizing the browser pane retains the exact URL state instead of dropping back to workspace root.
+- **Local hold-to-talk Voice & whisper Integration**: Added high-fidelity microphone capturing with local/Groq Whisper transcription and automated Portuguese-to-English translation.
+- **PTY Buffer & Reattach Improvements**: Fixed core PTY leaks and terminal process race conditions so that multiple parallel shells open instantly and retain terminal visual buffers.
 
-### Fixes
-- Resolved UI crashes in terminal renderer
-- Fixed identity injection in PTY processes
-- Stabilized update workflow and sync mechanisms
-
-### Known Issues
-- Windows: Some antivirus may flag the unsigned executable
-- macOS: First launch requires manual Gatekeeper bypass
+### Fixes & Stabilities
+- Replaced monolithic modules with decoupled registers and dynamic message bus routers.
+- Resolved memory leaks and terminal process hang-ups under core PTY modules.
+- Integrated proper OAuth state parameter validation and removed all hardcoded auth secrets.
+- Fixed welcome screen scroll container overflow issues and polished layout styling for high-definition displays.
+- Consolidated bidirectionally synced stories across `stories.json` and `backlog.md` with auto-divergence resolution.
 
 ---
 
@@ -122,4 +125,8 @@ MCP_CONFIG_PATH=/path/to/mcp.json
 
 ## License
 
-Copyright (c) 2025 GG.AI Labs. All rights reserved.
+Copyright (c) 2026 GG.AI Labs. All rights reserved.
+
+---
+
+*Built with Electron + React + TypeScript. Powered by MCP.*
