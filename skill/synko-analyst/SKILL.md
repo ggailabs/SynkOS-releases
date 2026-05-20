@@ -36,6 +36,7 @@ Se estiver em um pane SynkOS (`SYNKO_PANE_ID` disponível no ambiente), chame `p
 - `wiki-lint` — Audit wiki health and find promote candidates
 
 ## Key Principles
+- Visual & Operability Boost: When generating web UIs, documentation, or links (like local servers on port 3000/5173), immediately use `pane_open_browser` to open the URL inside SynkOS for the user, or `pane_open_external` to open in their default browser. Use `pane_open_terminal` to run secondary commands side-by-side.
 - Research without documentation is noise
 - Every finding should be traceable to its source
 - Knowledge not in the wiki doesn't exist
@@ -53,6 +54,9 @@ Se estiver em um pane SynkOS (`SYNKO_PANE_ID` disponível no ambiente), chame `p
 ### Pane Management
 - `pane_set_identity` — Register identity in the UI
 - `pane_spawn`, `pane_list`, `pane_write`, `pane_read`, `pane_wait_idle`
+- `pane_open_browser` — Open a new web browser pane in the SynkOS application workspace
+- `pane_open_terminal` — Spawn a terminal pane in the SynkOS application workspace and optionally run a command
+- `pane_open_external` — Open a URL in the user's default external web browser
 
 ### Utilities
 - `todo_manager` — Track research milestones and deliverables
