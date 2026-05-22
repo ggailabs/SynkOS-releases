@@ -43,6 +43,10 @@ synkos-skill/
 | `pane_write` | Enviar um prompt para um painel como se o tivesses digitado | Após lançar (ou para escrever num painel existente) |
 | `pane_wait_idle` | Bloquear até o painel terminar | Sempre antes de ler — nunca leias um painel a correr |
 | `pane_read` | Obter as últimas N linhas do output de um painel | Após `pane_wait_idle` confirmar que o painel terminou |
+| `pane_set_identity` | Registar skill/role num painel | Ao lançar um painel para uma função específica |
+| `pane_kill` | Matar um processo de painel | Limpeza quando um painel está preso ou não é mais necessário |
+| `pane_open_browser` | Abrir um painel de navegador | Quando a tarefa precisa de interação web |
+| `pane_open_terminal` | Abrir um terminal | Para comandos shell ou processos longos |
 | `todo_manager` | Criar e atualizar uma lista de tarefas visível em tempo real | Projetos com 3 ou mais marcos distintos a nível de milestone |
 
 Assinaturas completas, formatos de retorno e casos limite estão documentados em [`references/tools.md`](references/tools.md).
@@ -127,42 +131,16 @@ mimo    = pane_spawn(providerId: "mimo-FxzXvc", model: "mimo-v2.5-pro")
 
 ## Providers e Seleção de Modelos
 
-Esta instalação inclui quatro providers. Os IDs abaixo são específicos desta máquina — verifica sempre com `pane_list_providers()` em tempo de execução.
-
-| Provider ID | Label | Modelos |
-|-------------|-------|---------|
-| `claude-oauth` | Claude Code (predefinido) | `claude-opus-4-7`, `claude-sonnet-4-6`, `claude-haiku-4-5` |
-| `gemini-cli` | Gemini CLI | `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `gemini-3-flash-preview` |
-| `codex-cli` | Codex CLI | `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex`, `gpt-5.2` |
-| `mimo-FxzXvc` | MIMO Token Plan SGP | `mimo-v2.5-pro`, `mimo-v2.5`, `mimo-v2-pro`, `mimo-v2-omni` |
-
-### Quando usar cada modelo
-
-| Tarefa | Modelo recomendado |
-|--------|--------------------|
-| Decisões de arquitetura, revisão de segurança, raciocínio complexo | **Claude Opus 4.7** |
-| Implementação de funcionalidades, refactors multi-ficheiro, testes | **Claude Sonnet 4.6** |
-| Escrita de documentação, transformações mecânicas, análise de logs | **Claude Haiku 4.5** |
-| Pesquisa na web, informação recente, segunda opinião estilística | **Gemini 2.5 Flash** |
-| Código algorítmico, terceira perspetiva em brainstorms | **Codex GPT-5.4** |
-| Trabalho em massa com orçamento de tokens limitado | **MIMO Pro** |
-| Brainstorm multi-perspetiva | Opus + Gemini + Codex em conjunto |
-
-**Erros comuns:**
-- Não uses Opus para tudo "por precaução" — é lento e caro. O Sonnet faz a maioria do trabalho de execução igualmente bem.
-- Não uses Haiku para tarefas ambíguas — perde nuance em raciocínio complexo.
-- Não trates o MIMO como substituto direto do Claude em trabalho crítico — é compatível mas não idêntico.
-
 Guia completo em [`references/providers.md`](references/providers.md).
 
 ---
 
 ## todo_manager: Acompanhamento de Marcos
 
-Usa `todo_manager` quando um projeto tem **3 ou mais tarefas distintas a nível de milestone**. Não o uses para builds simples, correções de bugs ou perguntas conversacionais — é overhead desnecessário para pedidos triviais.
+Usa `todo_manager` quando um projeto tem **3 ou mais tarefas distintas a nível de milestone**.
 
 ```
-# Configura a lista de tarefas visível (máx. 7 tarefas; a primeira fica ativa imediatamente)
+# Configura a lista de tarefas visível (máx. 7 tarefas)
 todo_manager(action: "set_tasks", tasks: [
   "Atualizar schema da base de dados",
   "Refatorar rotas da API",
@@ -171,42 +149,38 @@ todo_manager(action: "set_tasks", tasks: [
   "Executar testes end-to-end"
 ])
 
-# Avança a lista assim que cada marco termina — chama imediatamente, não acumules
+# Avança a lista assim que cada marco termina
 todo_manager(action: "move_to_task", moveToTask: "Refatorar rotas da API")
 
 # Sinaliza o fim do projeto
 todo_manager(action: "mark_all_done")
 ```
 
-O progresso em tempo real é a funcionalidade. Se acumulares as chamadas a `move_to_task` e as fizeres todas no final, o utilizador não vê nada atualizar até ao último momento.
-
-**Usa granularidade de milestone.** "Integrar formulário de registo" lê-se como progresso. "Adicionar import statement" lê-se como ruído.
-
 ---
 
 ## Erros Comuns
 
 1. **Ler antes de esperar** — `pane_read` num painel a correr devolve output parcial. Chama sempre `pane_wait_idle` primeiro.
-2. **Fan-out sequencial** — múltiplas chamadas a `pane_write` têm de acontecer na mesma turn, não uma por turn. Writes sequenciais eliminam o paralelismo.
-3. **Briefs vagos para subpainéis** — os subpainéis não têm contexto da conversa atual. Especifica o objetivo, ficheiros de entrada, formato do output esperado e onde guardar.
-4. **Lançar quando um worker já existe** — chama `pane_list()` primeiro. Reutiliza o painel de trabalho inativo antes de lançar um novo.
-5. **IDs de providers hardcoded** — IDs como `mimo-FxzXvc` são locais à máquina e serão diferentes noutras instalações. Chama sempre `pane_list_providers()` em tempo de execução.
-6. **Todos em micro-passos** — `todo_manager` é para 3–7 deliverables a nível de milestone, não para cada ação individual.
-7. **Usar todo_manager para pedidos triviais** — para uma tarefa simples, a lista de tarefas é overhead desnecessário.
-8. **Acumular chamadas a `move_to_task`** — chama imediatamente quando cada milestone termina. O utilizador vê a lista atualizar em tempo real.
+2. **Fan-out sequencial** — múltiplas chamadas a `pane_write` têm de acontecer na mesma turn, não uma por turn.
+3. **Briefs vagos para subpainéis** — os subpainéis não têm contexto da conversa atual.
+4. **Lançar quando um worker já existe** — chama `pane_list()` primeiro.
+5. **IDs de providers hardcoded** — chama sempre `pane_list_providers()` em tempo de execução.
+6. **Todos em micro-passos** — `todo_manager` é para 3–7 milestones, não para cada ação.
+7. **Acumular chamadas a `move_to_task`** — chama imediatamente quando cada milestone termina.
+8. **Esquecer `pane_set_identity`** — marca o role/skill ao lançar painéis para workers.
 
 ---
 
 ## Quando NÃO Orquestrar
 
-- Perguntas de conhecimento puro ("O que é X?", "Explica Y") — responde inline
-- Correções de bugs, refactors, edições de ficheiro único — sem benefício de paralelismo
-- Qualquer coisa que uma resposta inline de dois minutos resolve — delegar seria mais lento
+- Perguntas de conhecimento puro — responde inline
+- Correções de bugs, refactors, edições de ficheiro único
+- Qualquer coisa que uma resposta inline de dois minutos resolve
 
-Em caso de dúvida, faz a tarefa diretamente. A orquestração é uma ferramenta para formas específicas de trabalho, não um modo predefinido.
+Em caso de dúvida, faz a tarefa diretamente.
 
 ---
 
 ## Aviso sobre o Painel de Trabalho
 
-Podes ser o orquestrador, ou podes ser um painel de trabalho para o qual outro orquestrador está a delegar. Se o teu prompt inicial parece uma tarefa autossuficiente sem enquadramento de orquestrador no system prompt, és um worker — executa a tarefa diretamente sem lançar mais painéis.
+Podes ser o orquestrador, ou podes ser um painel de trabalho para o qual outro orquestrador está a delegar. Se o teu prompt inicial parece uma tarefa autossuficiente, és um worker — executa diretamente sem lançar mais painéis.

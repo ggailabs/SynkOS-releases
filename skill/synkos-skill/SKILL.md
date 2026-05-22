@@ -1,18 +1,18 @@
 ---
 name: synkos-skill
-description: Master skill for SynkOS multi-agent orchestration IDE. Use this skill whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, use the todo manager, or do anything involving pane_spawn, pane_write, pane_read, pane_wait_idle, pane_list, pane_list_providers, or todo_manager.
+description: Master skill for SynkOS multi-agent orchestration. Use whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, or use todo_manager.
 ---
 
 # SynkOS Skill
 
-You are running inside SynkOS — a multi-agent orchestration IDE. Each Claude session is a visible pane in a workspace grid. You can spawn more panes, delegate work to them, run multiple models in parallel, and coordinate squads of named specialist agents.
+You are running inside SynkOS — a multi-agent orchestration platform. Each Claude session is a visible pane in a workspace grid. You can spawn more panes, delegate work to them, run multiple models in parallel, and orchestrate squad runs.
 
 This file covers the decision tree and must-know patterns. For depth, read the relevant reference file:
 
 - **references/tools.md** — full API for the SynkOS orchestration tools, parameter shapes, return values
 - **references/recipes.md** — worked end-to-end examples (code review squad, parallel doc+impl, multi-perspective brainstorm, long migration)
 - **references/providers.md** — which provider/model to reach for, with cost & latency tradeoffs
-- **references/squads.md** — the 8 specialist squads installed in this project and how to activate them
+- **references/squads.md** — SynkOS squad templates and multi-pane orchestration patterns
 
 Read these only when needed. SKILL.md alone is enough for most decisions.
 
@@ -45,6 +45,10 @@ Spawning a pane has cost: setup time (~5-10s), separate context (sub-pane has ze
 | `pane_write` | Send prompt to pane | After spawn (or to existing pane) |
 | `pane_wait_idle` | Block until pane done | Before reading — never read a running pane |
 | `pane_read` | Get pane output | After wait_idle |
+| `pane_set_identity` | Register skill/role on a pane | When spawning a pane for a specific role |
+| `pane_kill` | Kill a pane process | Cleanup when a pane is stuck or no longer needed |
+| `pane_open_browser` | Open a browser pane | When the task needs web interaction |
+| `pane_open_terminal` | Spawn terminal pane | For shell commands or long-running processes |
 | `todo_manager` | Visible task list | Projects with 3+ milestones |
 
 Full signatures, return shapes, and edge cases live in `references/tools.md`.
@@ -133,9 +137,10 @@ The skill triggers when there's actual orchestration work. If in doubt, just do 
 3. **Vague briefs to sub-panes** — they have zero context. Spell out files, goals, output format, save path.
 4. **Spawning when worker exists** — call `pane_list()` first, reuse the idle worker.
 5. **Non-default provider without listing first** — IDs vary per machine; unknown IDs error out.
-6. **Micro-step todos** — todo_manager is for 3-7 milestones, not every action.
-7. **Using todo_manager for single-task work** — it's overhead for trivial requests.
-8. **Forgetting `move_to_task`** — the user can't see live progress if you batch updates.
+ 6. **Micro-step todos** — todo_manager is for 3-7 milestones, not every action.
+ 7. **Using todo_manager for single-task work** — it's overhead for trivial requests.
+ 8. **Forgetting `move_to_task`** — the user can't see live progress if you batch updates.
+ 9. **Forgetting `pane_set_identity`** — always register the role/skill on spawned worker panes so tools can route properly.
 
 ---
 
