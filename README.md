@@ -2,7 +2,7 @@
 
 > Multi-agent terminal orchestrator for AI-powered development workflows
 
-## Latest Version: v0.7.7
+## Latest Version: v0.8.0
 
 **SynkOS** is the operational layer for multi-agent AI development. It integrates MCP as internal contract, squads as traceable execution units, stories as planning primitives, vault/wiki as persistent memory, and a UI for observability and operational control.
 
@@ -14,26 +14,26 @@
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-0.7.7.AppImage` | ~150 MB | Universal Linux executable (recommended) |
-| `synko_0.7.7_amd64.deb` | ~124 MB | Debian/Ubuntu installation package |
+| `SynkOS-0.8.0.AppImage` | ~150 MB | Universal Linux executable (recommended) |
+| `synko_0.8.0_amd64.deb` | ~124 MB | Debian/Ubuntu installation package |
 
 **Installation (AppImage):**
 ```bash
 # Download and make executable
-chmod +x SynkOS-0.7.7.AppImage
-./SynkOS-0.7.7.AppImage
+chmod +x SynkOS-0.8.0.AppImage
+./SynkOS-0.8.0.AppImage
 ```
 
 **Installation (Debian/Ubuntu):**
 ```bash
-sudo dpkg -i synko_0.7.7_amd64.deb
+sudo dpkg -i synko_0.8.0_amd64.deb
 ```
 
 ### macOS
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-0.7.7.dmg` | ~160 MB | macOS Disk Image |
+| `SynkOS-0.8.0.dmg` | ~160 MB | macOS Disk Image |
 
 **Installation:**
 1. Open the `.dmg` file (or build locally on macOS)
@@ -44,10 +44,10 @@ sudo dpkg -i synko_0.7.7_amd64.deb
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS.Setup.0.7.7.exe` | ~121 MB | Windows Installer |
+| `SynkOS.Setup.0.8.0.exe` | ~121 MB | Windows Installer |
 
 **Installation:**
-1. Run `SynkOS.Setup.0.7.7.exe` installer
+1. Run `SynkOS.Setup.0.8.0.exe` installer
 2. Complete steps and launch **SynkOS**
 
 ---
@@ -60,23 +60,56 @@ SynkOS agent skills are installed via the [skills.sh](https://www.skills.sh) CLI
 npx skills add <skill-name>
 ```
 
-Available skills:
+### Role Skills (SynkOS Core)
 
 | Skill | Description |
 |-------|-------------|
-| `synko-dev` | General development agent |
-| `synko-architect` | Architecture and design decisions |
-| `synko-qa` | Quality assurance and testing |
-| `synko-sm` | Scrum master and process management |
-| `synko-analyst` | Requirements analysis |
-| `synko-po` | Product owner and backlog management |
-| `synko-pm` | Project management |
-| `synko-data-engineer` | Data engineering workflows |
-| `synko-devops` | DevOps and infrastructure |
-| `synko-ux-design-expert` | UX design and research |
-| `clean-code-architect` | Code quality and clean architecture |
-| `impeccable` | Frontend design and UI polish |
-| `ui-ux-pro-max` | Advanced UI/UX design system |
+| `synkos-skill` | Base skill — orchestration, tools reference, patterns |
+| `synko-dev` | Code implementation and technical delivery |
+| `synko-architect` | Architecture, ADRs, and design decisions |
+| `synko-qa` | Quality gates, code review, security |
+| `synko-sm` | Story lifecycle and handoff orchestration |
+| `synko-analyst` | Research, knowledge consolidation, wiki management |
+| `synko-po` | Story validation and acceptance criteria |
+| `synko-pm` | Product strategy and backlog prioritization |
+| `synko-data-engineer` | Database design, RLS, migrations |
+| `synko-devops` | CI/CD, Docker, monitoring, release delivery |
+| `synko-ux-design-expert` | UI audits, design systems, accessibility |
+
+### Complementary Skills
+
+| Skill | Description |
+|-------|-------------|
+| `clean-code-architect` | Code review with SOLID, DRY, KISS, YAGNI |
+| `impeccable` | Full product redesign and UI craft |
+| `ui-ux-pro-max` | Advanced design system (50+ styles, 161 palettes) |
+| `architecture-decision-records` | ADR templates and workflow |
+| `owasp-top-10` | OWASP 2021 security audit and remediation |
+| `dispatching-parallel-agents` | Parallel dispatch pattern for independent tasks |
+| `find-skills` | Discover and install skills from the ecosystem |
+
+### Workflow Skills
+
+| Skill | Description |
+|-------|-------------|
+| `writing-plans` | Implementation plans before coding |
+| `executing-plans` | Execute plans with review checkpoints |
+| `brainstorming` | Multi-perspective brainstorm sessions |
+| `writing-skills` | Create and evolve agent skills |
+| `requesting-code-review` | How to request effective code review |
+| `receiving-code-review` | How to evaluate and respond to feedback |
+| `finishing-a-development-branch` | Branch finalization with tests and PR |
+| `subagent-driven-development` | Spec → implement → review pipeline |
+
+### Utility Skills
+
+| Skill | Description |
+|-------|-------------|
+| `caveman` | Ultra-compressed communication (~75% token savings) |
+| `caveman-review` | Compressed code review comments |
+| `caveman-commit` | Terse Conventional Commits messages |
+| `caveman-compress` | Compress .md files for token efficiency |
+| `personal-productivity` | Time management and task prioritization |
 
 ---
 
@@ -95,20 +128,34 @@ Available skills:
 
 ---
 
-## What's New in v0.7.7
+## What's New in v0.8.0
 
 ### Highlights
-- **Direct Agent Pane Spawning**: Added new MCP tools (`pane_open_terminal`, `pane_open_browser`, `pane_open_external`) that allow running agents to trigger and manage visual panes in the SynkOS dashboard.
-- **Browser URL State Persistence**: Solved the UI layout bug so that moving or resizing the browser pane retains the exact URL state instead of dropping back to workspace root.
-- **Local hold-to-talk Voice & whisper Integration**: Added high-fidelity microphone capturing with local/Groq Whisper transcription and automated Portuguese-to-English translation.
-- **PTY Buffer & Reattach Improvements**: Fixed core PTY leaks and terminal process race conditions so that multiple parallel shells open instantly and retain terminal visual buffers.
+- **68+ MCP Tools**: Expanded from 42 to 68+ tools across 12 categories including Memory, Triggers, and Session management.
+- **Skill System Overhaul**: Restructured all 10 role skills with standardized format, removed duplication, and added version tracking.
+- **Trigger Automation**: New `trigger_register`, `trigger_list`, `trigger_delete` for scheduled and recurring agent tasks.
+- **Semantic Memory**: `memory_store` and `memory_search` for cross-session recall of preferences and context.
+- **Session Resume**: `session_resume` to pick up story context from previous sessions.
+- **New Complementary Skills**: Added `architecture-decision-records` (ADR templates) and `owasp-top-10` (security audit).
 
-### Fixes & Stabilities
-- Replaced monolithic modules with decoupled registers and dynamic message bus routers.
-- Resolved memory leaks and terminal process hang-ups under core PTY modules.
-- Integrated proper OAuth state parameter validation and removed all hardcoded auth secrets.
-- Fixed welcome screen scroll container overflow issues and polished layout styling for high-definition displays.
-- Consolidated bidirectionally synced stories across `stories.json` and `backlog.md` with auto-divergence resolution.
+### New Tools
+- `pane_set_identity` — Register agent identity in the UI
+- `task_claim`, `task_cleanup` — Single-pane task ownership and cleanup
+- `story_checkpoint_list`, `story_rebuild_index`, `story_sync_from_backlog`, `story_validate_consistency` — Story lifecycle management
+- `squad_seed_templates` — Bootstrap standard squad templates
+- `trigger_register`, `trigger_list`, `trigger_delete` — Background automation
+- `memory_store`, `memory_search` — Semantic memory persistence
+- `session_resume` — Resume story context across sessions
+- `system_notify` — Proactive OS-level notifications
+- `translate_text`, `voice_transcribe` — Voice and translation utilities
+- `human_delegate` — Escalate to human when blocked
+
+### Previous (v0.7.7)
+- Direct Agent Pane Spawning (`pane_open_terminal`, `pane_open_browser`, `pane_open_external`)
+- Browser URL State Persistence
+- Local hold-to-talk Voice & Whisper Integration
+- PTY Buffer & Reattach Improvements
+- Bidirectionally synced stories with auto-divergence resolution
 
 ---
 
