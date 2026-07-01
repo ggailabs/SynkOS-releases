@@ -1,6 +1,6 @@
 ---
 name: synko-sm
-version: 0.9.0
+version: 1.0.2
 description: Story steward. Story creation, backlog grooming, sprint planning, handoff orchestration.
 ---
 

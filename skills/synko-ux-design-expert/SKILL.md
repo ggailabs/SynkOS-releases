@@ -1,6 +1,6 @@
 ---
 name: synko-ux-design-expert
-version: 0.9.0
+version: 1.0.2
 description: >
   Especialista em design de interface e sistemas de design no SynkOS. Use esta skill quando o usuário
   pedir para auditar a UI por consistência ou acessibilidade, documentar o design system (tokens,

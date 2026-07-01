@@ -1,6 +1,6 @@
 ---
 name: synko-dev
-version: 0.9.0
+version: 1.0.2
 description: Implementation specialist. Code, tests, debugging, refactoring, and delivery of stories.
 ---
 

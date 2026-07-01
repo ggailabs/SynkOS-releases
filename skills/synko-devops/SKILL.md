@@ -1,6 +1,6 @@
 ---
 name: synko-devops
-version: 0.9.0
+version: 1.0.2
 description: Infrastructure and deployment engineer. CI/CD pipelines, Docker, server management, monitoring, and release delivery.
 ---
 

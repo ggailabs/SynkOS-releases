@@ -30,7 +30,7 @@ Use `context_resolve_tier` quando story status ou categoria da task for ambíguo
 
 ## Execution harness (E22/E29, v0.9+)
 
-Camada MCP nativa (inspirada em dotcontext). Referência: `skill/synkos-skill/references/execution-harness.md`.
+Camada MCP nativa (inspirada em dotcontext). Referência: `skills/synkos-skill/references/execution-harness.md`.
 
 | Fase | Tools |
 |------|-------|
@@ -74,5 +74,5 @@ Para progresso intermediário que não atinge esses critérios, usar `story_chec
 
 ## Referências
 
-- `skill/synkos-skill/` — orquestração + execution harness
-- Skills de role: `skill/synko-{dev,qa,sm,architect,...}/`
+- `skills/synkos-skill/` — orquestração + execution harness
+- Skills de role: `skills/synko-{dev,qa,sm,architect,...}/`

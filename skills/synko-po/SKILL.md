@@ -1,6 +1,6 @@
 ---
 name: synko-po
-version: 0.9.0
+version: 1.0.2
 description: Product owner. Story validation, acceptance criteria quality, backlog refinement, value assurance.
 ---
 

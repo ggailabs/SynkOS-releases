@@ -1,6 +1,6 @@
 ---
 name: synko-architect
-version: 0.9.0
+version: 1.0.2
 description: Architecture steward. System design, ADRs, tradeoffs, technical strategy, and brownfield discovery.
 ---
 

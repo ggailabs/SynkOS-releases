@@ -1,6 +1,6 @@
 ---
 name: synko-qa
-version: 0.9.0
+version: 1.0.2
 description: Quality guardian. Code review, test strategy, quality gates, regression prevention.
 ---
 

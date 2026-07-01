@@ -1,6 +1,6 @@
 ---
 name: synko-data-engineer
-version: 0.9.0
+version: 1.0.2
 description: Data infrastructure. Database design, schema audit, security policies, data modeling, migrations.
 ---
 

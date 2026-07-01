@@ -1,6 +1,6 @@
 ---
 name: synko-pm
-version: 0.9.0
+version: 1.0.2
 description: Product strategist. PRD ownership, backlog prioritization, stakeholder alignment, epic creation.
 ---
 

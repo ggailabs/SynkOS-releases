@@ -54,6 +54,8 @@ sudo dpkg -i synko_0.9.0_amd64.deb
 
 ## Skills
 
+All bundled agent skills live under **`skills/`** (canonical path in this repo).
+
 SynkOS agent skills are installed via the [skills.sh](https://www.skills.sh) CLI:
 
 ```bash
@@ -139,7 +141,7 @@ npx skills add <skill-name>
 - **Session traces**: `trace_list`, `trace_replay_summary` — observabilidade no vault
 - **Skills atualizadas**: todas as role skills `synko-*` documentam o harness (v0.9.0)
 
-Referência: `skill/synkos-skill/references/execution-harness.md`
+Referência: `skills/synkos-skill/references/execution-harness.md`
 
 ### Previous (v0.8.0)
 - 68+ MCP tools, trigger automation, semantic memory, session resume

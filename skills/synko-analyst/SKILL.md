@@ -1,6 +1,6 @@
 ---
 name: synko-analyst
-version: 0.9.0
+version: 1.0.2
 description: Research and analysis. Discovery, data analysis, knowledge consolidation, wiki management.
 ---
 
