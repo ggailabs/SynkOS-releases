@@ -2,7 +2,7 @@
 
 Native SynkOS layer inspired by **dotcontext** patterns (semantic map, policy gates, lifecycle hooks, sensors). Prefixo de contratos: `synkos.*`. Não depende de MCP externo dotcontext.
 
-Disponível a partir de **v0.9.0**. Config em `.synko/config/`.
+Disponível a partir de **v0.9.0**; kickoff cognitivo (E31) e delegação paralela (E32) a partir de **v1.0+**. Config em `.synko/config/`.
 
 ---
 
@@ -61,7 +61,50 @@ orchestrator → handoff_list / handoff_read
 
 ---
 
-## 3. Execution gates & policy (E29)
+## 3. Cognitive kickoff (E31, v1.0+)
+
+Kickoff greenfield/brownfield materializa projeto, vault e stories iniciais. Stories originadas do kickoff carregam `## Kickoff Metadata` com `kickoffOrigin: true` e `kickoffMode`.
+
+### Artefatos por modo
+
+| Modo | Outputs principais |
+|------|-------------------|
+| **brownfield** | `context_map_build` → mapa semântico; `projects/{id}/discovery/report.md`; `discovery/semantic-summary.md`; story `E0-D1` (draft até discovery run) |
+| **greenfield** | `stackPreset` em `.synko/config/project.yaml` (`electron`, `node-api`, `python`, `generic`); seeds PRD/architecture/backlog; `projects/{id}/bootstrap/skill-profile.md` |
+
+### Bootstrap workspace (ambos)
+
+- Raiz do workspace: `AGENTS.md` + `CLAUDE.md` (Claude Code lê `CLAUDE.md`)
+- `hook_install` (ou auto no bootstrap) — traces de sessões CLI standalone
+- Defaults em `.synko/config/workspace.json` (tool budget, etc.)
+
+### Policy `draft → ready` (kickoff only)
+
+Além das regras de `done`, stories kickoff **não transitam para `ready` sem evidência**:
+
+| Regra | Condição |
+|-------|----------|
+| `kickoff_brownfield_discovery_required_for_ready` | `projects/{projectId}/discovery/report.md` existe no vault |
+| `kickoff_greenfield_bootstrap_required_for_ready` | `stackPreset` em `project.yaml` + `bootstrap/skill-profile.md` |
+
+Sempre: `policy_check_story_transition(fromStatus: draft, toStatus: ready, storyId)` antes de `story_update`.
+
+### Discovery Pack (brownfield)
+
+1. `squad_seed_templates` — inclui template `brownfield-discovery` (orchestrator: `synko-sm`, worker: `synko-architect`)
+2. `squad_run_start(templateId: "brownfield-discovery", activeStoryId: "E0-D1", ...)`
+3. Após run + report válido → `policy_check_story_transition` → `story_update(status: ready)` para `E0-D1`
+
+UI: stories kickoff em `draft` exibem badge **aguardando discovery** até evidence presente.
+
+### Continuidade
+
+- `session_resume` — retomar sessão anterior (perfil `minimal` sempre expõe)
+- `wiki_query scope:sessions query:{story-id}` — último handoff antes de retomar trabalho
+
+---
+
+## 4. Execution gates & policy (E29)
 
 ### Sensors & evidence
 Stories com `gateProfile: code` ou `infra` exigem evidência antes de `done`.
@@ -81,16 +124,17 @@ Inspirado em dotcontext `policy.json`. Config: `.synko/config/execution-policy.j
 |------|-----|
 | `policy_get` | regras ativas |
 | `policy_evaluate` | simula transição |
-| `policy_check_story_transition` | **obrigatório** antes de `story_update` → `done` |
+| `policy_check_story_transition` | **obrigatório** antes de `story_update` → `ready` (kickoff) ou `done` |
 
 Regras típicas:
-- evidence completa para perfis code/infra
-- `fileList` preenchido
-- acceptance criteria `[x]` no markdown da story
+- **kickoff `draft → ready`:** discovery report (brownfield) ou stackPreset + skill-profile (greenfield) — ver §3
+- **`→ done`:** evidence completa para perfis code/infra
+- **`→ done`:** `fileList` preenchido
+- **`→ done`:** acceptance criteria `[x]` no markdown da story
 
 ---
 
-## 4. Session traces (E29-S2/S5)
+## 5. Session traces (E29-S2/S5)
 
 Timeline JSONL em vault. Auto-trace em `pane_spawn`, `handoff_*`, `gate_run_sensors`.
 
@@ -102,7 +146,7 @@ Timeline JSONL em vault. Auto-trace em `pane_spawn`, `handoff_*`, `gate_run_sens
 
 ---
 
-## 5. Lifecycle hooks — Claude + Codex (E29-S6/S7)
+## 6. Lifecycle hooks — Claude + Codex (E29-S6/S7)
 
 Bridge entre sessões **standalone** (CLI fora do pane SynkOS) e traces do vault.
 
@@ -122,7 +166,7 @@ Eventos: `session_start`, `post_tool_use` (matcher `mcp__synko__.*` no Claude), 
 
 ---
 
-## 6. Fluxo canônico — story → done (code gate)
+## 7. Fluxo canônico — story → done (code gate)
 
 ```
 context_resolve_tier
@@ -139,7 +183,7 @@ Se `policy_check_story_transition` falhar: corrigir evidence/fileList/AC — nã
 
 ---
 
-## 7. Fluxo canônico — delegar worker
+## 8. Fluxo canônico — delegar worker
 
 **Single worker:**
 ```
@@ -163,10 +207,12 @@ handoff_list(storyId, sinceMinutes)
 
 ---
 
-## 8. O que NÃO fazer
+## 9. O que NÃO fazer
 
 - Assumir tool MCP existe sem `tool_budget_list`
 - Colar `architecture.md` / `prd.md` em `pane_write` — usar `context_map_get` + handoff
+- `story_update → ready` em story kickoff sem `policy_check_story_transition` (E31)
 - `story_update → done` sem `policy_check_story_transition`
-- `pane_spawn` sem `pane_write` (pane fica idle)
+- `pane_spawn` sem `pane_write` / `pane_write_many` (pane fica idle)
+- Workers delegados terminarem sem `handoff_submit` quando o brief pediu entrega estruturada (E32)
 - Ignorar `hook_sync_events` em workflows Codex-only (memória fica cega)

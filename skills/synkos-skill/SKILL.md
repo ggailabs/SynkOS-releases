@@ -20,14 +20,15 @@ Read these only when needed. SKILL.md alone is enough for most pane decisions; r
 
 ---
 
-## Execution harness (v0.9+) — resumo
+## Execution harness (v1.0+) — resumo
 
 SynkOS não é só spawn de panes. O fluxo completo MCP:
 
 1. **Context economy** — `context_resolve_tier`; mapa via `context_map_semantic` / `context_map_get`; `tool_budget_list` antes de tools raras
-2. **Delegação** — `handoff_compose` → `pane_write(handoff)` ou `pane_write_many` (fan-out); workers `handoff_submit`; orchestrator `handoff_list` (fan-in assíncrono)
-3. **Gates** — `gate_run_sensors` + `policy_check_story_transition` antes de `story_update → done`
-4. **Observabilidade** — traces auto + `hook_sync_events` para sessões CLI (`.codex/hooks.json`, `.claude/settings.json`)
+2. **Kickoff (E31)** — greenfield/brownfield bootstrap; policy `draft → ready` exige discovery report ou `stackPreset` + skill-profile — ver `execution-harness.md` §3
+3. **Delegação** — `handoff_compose` → `pane_write(handoff)` ou `pane_write_many` (fan-out); workers `handoff_submit`; orchestrator `handoff_list` (fan-in assíncrono)
+4. **Gates** — `gate_run_sensors` + `policy_check_story_transition` antes de `story_update → done` (e `→ ready` em stories kickoff)
+5. **Observabilidade** — traces auto + `hook_sync_events` para sessões CLI (`.codex/hooks.json`, `.claude/settings.json`)
 
 Detalhes, configs e anti-patterns: `references/execution-harness.md`.
 
