@@ -22,12 +22,30 @@ System architecture, technology stack evaluation, API design, security architect
 - `research <topic>` - Deep research prompt for technology decisions
 - `adr <title>` - Create architecture decision record
 
-## Execution Harness (E22/E29, v0.9+)
+## Execution Harness (E22/E29/E31, v1.0+)
 
 Brownfield / discovery:
 1. `context_resolve_tier` — discovery e ADRs costumam exigir tier `full`
 2. `context_map_semantic(compact)` + `context_map_get(navigation|keyFiles)` antes de abrir docs inteiros
 3. `tool_budget_list` — perfil pode limitar tools de orquestração
+
+### Discovery Pack (brownfield kickoff)
+
+Artefatos esperados no vault após kickoff ou discovery run:
+
+| Path | Conteúdo |
+|------|----------|
+| `projects/{id}/discovery/report.md` | Relatório estruturado brownfield (stack, riscos, key files) |
+| `projects/{id}/discovery/semantic-summary.md` | Resumo do mapa semântico |
+| `projects/{id}/bootstrap/skill-profile.md` | Perfil de skills/roles (greenfield) |
+
+Como worker no template **`brownfield-discovery`** (`squad_seed_templates` → `squad_run_start`):
+- Ler `discovery/report.md` com tier `full`
+- Produzir recomendações arquiteturais, ADRs iniciais, gaps para backlog
+- `wiki_save` / `wiki_ingest` para padrões reutilizáveis
+- Ao concluir: `handoff_submit` com summary, fileList, decisions (SM orquestra)
+
+Evidência `discovery/report.md` desbloqueia `policy_check_story_transition` → `ready` para `E0-D1`.
 
 Entrega para dev:
 - `handoff_compose` com decisions, fileList (paths), blockers — nunca dump de architecture.md
@@ -37,7 +55,7 @@ Stories `gateProfile: discovery` → findings documentados; `code` → dev/QA ro
 
 Antes de `story_update → done`: `policy_check_story_transition`.
 
-Referência: `synkos-skill` → `references/execution-harness.md`.
+Referência: `synkos-skill` → `references/execution-harness.md` (§3), `references/squads.md`.
 
 ## Key Principles
 - Every architectural decision must be documented (ADR)

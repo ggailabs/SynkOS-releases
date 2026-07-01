@@ -23,22 +23,33 @@ Research, data analysis, requirements discovery, knowledge consolidation, wiki m
 - `wiki-ingest <source>` - Promote knowledge to wiki
 - `wiki-lint` - Audit wiki health and find promote candidates
 
-## Execution Harness (E22/E29, v0.9+)
+## Execution Harness (E22/E29/E31, v1.0+)
 
 Pesquisa com economia de contexto:
 1. `context_resolve_tier` — default `standard`; escalar para `full` só se wiki/story insuficientes
 2. `wiki_query` antes de ler PRD/architecture completos
 3. `context_map_get` para localizar entidades e paths relevantes
 
-Consolidar memória:
-- `wiki_save` / `wiki_ingest` / `wiki_lint` como saída padrão
-- `handoff_persist` quando discovery alimenta próxima story
+### Brownfield discovery (E31)
+
+Durante kickoff ou squad `discovery`, consolidar findings em paths auditáveis:
+
+| Output | Onde gravar |
+|--------|-------------|
+| Relatório de discovery | `projects/{id}/discovery/report.md` (evidence para policy `ready`) |
+| Resumo semântico | `projects/{id}/discovery/semantic-summary.md` |
+| Padrões e entidades | wiki via `wiki_save` / `wiki_ingest` |
+| Gaps de escopo | `po_backlog_add` — não inflar story ativa |
 
 Stories `gateProfile: discovery` → evidência = findings no vault/wiki, não sensores de código.
 
+Consolidar memória:
+- `wiki_save` / `wiki_ingest` / `wiki_lint` como saída padrão
+- `handoff_persist` ou `handoff_submit` (se worker pane) quando discovery alimenta próxima story
+
 `tool_budget_list` no início da sessão.
 
-Referência: `synkos-skill` → `references/execution-harness.md`.
+Referência: `synkos-skill` → `references/execution-harness.md` (§3).
 
 ## Key Principles
 - Research without documentation is noise

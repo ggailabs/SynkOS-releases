@@ -22,20 +22,43 @@ Story validation, acceptance criteria quality assurance, backlog refinement, val
 - `approve-story <story-id>` - Mark story as ready for implementation
 - `reject-story <story-id>` - Return with specific improvement notes
 
-## Execution Harness (E22/E29, v0.9+)
+## Execution Harness (E22/E29/E31, v1.0+)
 
 Validação antes de implementar:
 1. `story_validate_consistency` — backlog, markdown e MCP alinhados
-2. `policy_evaluate` / `policy_check_story_transition` ao mover para `ready` ou aprovar `done`
+2. `policy_check_story_transition` **antes** de qualquer `story_update` de status
 3. AC testáveis entram em `handoff_compose` quando PO escala para dev
+
+### Transição `draft → ready`
+
+Stories normais: AC testáveis, ownerRole/reviewRole definidos, escopo IN/OUT claro.
+
+Stories **kickoff** (`kickoffOrigin: true` em `## Kickoff Metadata`) exigem evidência extra:
+
+| `kickoffMode` | Bloqueio até existir |
+|---------------|----------------------|
+| `brownfield` | `projects/{projectId}/discovery/report.md` no vault |
+| `greenfield` | `stackPreset` em `.synko/config/project.yaml` + `bootstrap/skill-profile.md` |
+
+Fluxo PO:
+```
+policy_check_story_transition(storyId, fromStatus: draft, toStatus: ready)
+→ se passou: story_update(status: ready)
+→ se falhou: listar violações (policy_get) e escalar SM/architect — não forçar ready
+```
+
+Story `E0-D1` brownfield permanece `draft` com badge UI "aguardando discovery" até report válido.
+
+### Transição `→ done`
 
 Definition of done inclui harness:
 - `gate_evidence_status` OK para perfis `code`/`infra`
 - fileList e AC `[x]` verificados pela policy engine
+- `policy_check_story_transition(toStatus: done)` antes de `story_update`
 
 `po_backlog_add` para gaps — não expandir story ativa.
 
-Referência: `synkos-skill` → `references/execution-harness.md`.
+Referência: `synkos-skill` → `references/execution-harness.md` (§3 kickoff, §4 policy).
 
 ## Key Principles
 - Stories must be validated before implementation, not after

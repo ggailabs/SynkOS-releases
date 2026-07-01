@@ -48,6 +48,35 @@ squad_run_start(
 | Delete template | `squad_template_delete` |
 | Seed default templates | `squad_seed_templates` |
 
+### Seeded templates (`squad_seed_templates`)
+
+| ID | Orchestrator | Workers | Uso |
+|----|--------------|---------|-----|
+| `brownfield-discovery` | `synko-sm` | `synko-architect` | Revisar discovery report pós-kickoff brownfield; tier `full`; memory policy exige handoff + wiki update |
+| `discovery` | `synko-pm` | `synko-architect`, `synko-analyst` | Pesquisa e documentação de projeto |
+| `gate-review` | `synko-po` | `synko-qa` | Review e quality gates |
+| `full-implementation` | `synko-sm` | `synko-dev`, `synko-qa` | Ciclo completo de feature |
+
+#### `brownfield-discovery` (E31 Discovery Pack)
+
+Após kickoff brownfield, SM inicia run para architect validar/enriquecer discovery antes de `E0-D1 → ready`:
+
+```
+squad_seed_templates()
+squad_run_start(
+  templateId: "brownfield-discovery",
+  projectId: "<projectId>",
+  goal: "Review kickoff discovery report and produce architecture recommendations",
+  activeStoryId: "E0-D1",
+)
+```
+
+Pré-requisitos: `projects/{projectId}/discovery/report.md` (gerado no kickoff).
+
+Pós-run: SM verifica evidence → `policy_check_story_transition(toStatus: ready)` → `story_update`.
+
+Routing policy: `brownfield-discovery-workflow`. Prefer squad run over ad hoc `pane_write_many` quando memory policy e wiki update são obrigatórios.
+
 ---
 
 ## Managing runs

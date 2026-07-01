@@ -22,7 +22,7 @@ Product requirements, backlog prioritization, stakeholder communication, epic cr
 - `prd-update <section>` - Update specific PRD section
 - `epic-create <title>` - Create new epic
 
-## Execution Harness (E22/E29, v0.9+)
+## Execution Harness (E22/E29/E31, v1.0+)
 
 Planejamento estratégico:
 1. `context_resolve_tier` → `full` para PRD/backlog grooming; `standard` para story pontual
@@ -31,9 +31,20 @@ Planejamento estratégico:
 
 Escopo novo → `po_backlog_add`, não `story_update` mid-flight.
 
-Ao priorizar releases: stories `infra` exigem evidence de deploy; `discovery` exige findings — alinhar com `policy_get`.
+### Kickoff e readiness (E31)
 
-Referência: `synkos-skill` → `references/execution-harness.md`.
+Após kickoff UI, stories seed ficam em `draft` até PO/SM validarem `ready`:
+
+| Modo kickoff | PM valida antes de priorizar para sprint |
+|--------------|------------------------------------------|
+| **greenfield** | `stackPreset` escolhido (`electron`, `node-api`, `python`, `generic`); PRD/architecture seeds coerentes com preset; `skill-profile.md` no vault |
+| **brownfield** | `discovery/report.md` + `semantic-summary.md`; discovery run (`E0-D1`) só vai a `ready` após evidence |
+
+`policy_get` + `policy_check_story_transition(toStatus: ready)` — PM não assume story kickoff está pronta só porque kickoff terminou.
+
+Ao priorizar releases: stories `infra` exigem evidence de deploy; `discovery` exige findings no vault/wiki.
+
+Referência: `synkos-skill` → `references/execution-harness.md` (§3).
 
 ## Key Principles
 - Backlog is a strategic asset, not a todo list
