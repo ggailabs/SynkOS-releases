@@ -2,7 +2,7 @@
 
 > Multi-agent terminal orchestrator for AI-powered development workflows
 
-## Latest Version: v0.8.0
+## Latest Version: v0.9.0
 
 **SynkOS** is the operational layer for multi-agent AI development. It integrates MCP as internal contract, squads as traceable execution units, stories as planning primitives, vault/wiki as persistent memory, and a UI for observability and operational control.
 
@@ -14,26 +14,26 @@
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-0.8.0.AppImage` | ~150 MB | Universal Linux executable (recommended) |
-| `synko_0.8.0_amd64.deb` | ~124 MB | Debian/Ubuntu installation package |
+| `SynkOS-0.9.0.AppImage` | ~150 MB | Universal Linux executable (recommended) |
+| `synko_0.9.0_amd64.deb` | ~124 MB | Debian/Ubuntu installation package |
 
 **Installation (AppImage):**
 ```bash
 # Download and make executable
-chmod +x SynkOS-0.8.0.AppImage
-./SynkOS-0.8.0.AppImage
+chmod +x SynkOS-0.9.0.AppImage
+./SynkOS-0.9.0.AppImage
 ```
 
 **Installation (Debian/Ubuntu):**
 ```bash
-sudo dpkg -i synko_0.8.0_amd64.deb
+sudo dpkg -i synko_0.9.0_amd64.deb
 ```
 
 ### macOS
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS-0.8.0.dmg` | ~160 MB | macOS Disk Image |
+| `SynkOS-0.9.0.dmg` | ~160 MB | macOS Disk Image |
 
 **Installation:**
 1. Open the `.dmg` file (or build locally on macOS)
@@ -44,10 +44,10 @@ sudo dpkg -i synko_0.8.0_amd64.deb
 
 | File | Size | Description |
 |------|------|-------------|
-| `SynkOS.Setup.0.8.0.exe` | ~121 MB | Windows Installer |
+| `SynkOS.Setup.0.9.0.exe` | ~121 MB | Windows Installer |
 
 **Installation:**
-1. Run `SynkOS.Setup.0.8.0.exe` installer
+1. Run `SynkOS.Setup.0.9.0.exe` installer
 2. Complete steps and launch **SynkOS**
 
 ---
@@ -128,27 +128,22 @@ npx skills add <skill-name>
 
 ---
 
-## What's New in v0.8.0
+## What's New in v0.9.0
 
-### Highlights
-- **68+ MCP Tools**: Expanded from 42 to 68+ tools across 12 categories including Memory, Triggers, and Session management.
-- **Skill System Overhaul**: Restructured all 10 role skills with standardized format, removed duplication, and added version tracking.
-- **Trigger Automation**: New `trigger_register`, `trigger_list`, `trigger_delete` for scheduled and recurring agent tasks.
-- **Semantic Memory**: `memory_store` and `memory_search` for cross-session recall of preferences and context.
-- **Session Resume**: `session_resume` to pick up story context from previous sessions.
-- **New Complementary Skills**: Added `architecture-decision-records` (ADR templates) and `owasp-top-10` (security audit).
+### Execution Harness (E22 + E29)
+- **Context economy**: `context_resolve_tier`, `context_map_build/get/semantic`, slim pane bootstrap
+- **Tool budget**: `tool_budget_*` — perfis por workspace limitam tools MCP expostas
+- **Handoff protocol**: `handoff_compose`, `handoff_persist` — delegação sem transcripts
+- **Gates & policy**: `gate_run_sensors`, `gate_evidence_status`, `policy_check_story_transition`
+- **Lifecycle hooks**: `hook_install` / `hook_sync_events` para Claude Code + Codex CLI
+- **Session traces**: `trace_list`, `trace_replay_summary` — observabilidade no vault
+- **Skills atualizadas**: todas as role skills `synko-*` documentam o harness (v0.9.0)
 
-### New Tools
-- `pane_set_identity` — Register agent identity in the UI
-- `task_claim`, `task_cleanup` — Single-pane task ownership and cleanup
-- `story_checkpoint_list`, `story_rebuild_index`, `story_sync_from_backlog`, `story_validate_consistency` — Story lifecycle management
-- `squad_seed_templates` — Bootstrap standard squad templates
-- `trigger_register`, `trigger_list`, `trigger_delete` — Background automation
-- `memory_store`, `memory_search` — Semantic memory persistence
-- `session_resume` — Resume story context across sessions
-- `system_notify` — Proactive OS-level notifications
-- `translate_text`, `voice_transcribe` — Voice and translation utilities
-- `human_delegate` — Escalate to human when blocked
+Referência: `skill/synkos-skill/references/execution-harness.md`
+
+### Previous (v0.8.0)
+- 68+ MCP tools, trigger automation, semantic memory, session resume
+- Skill system overhaul com version tracking
 
 ### Previous (v0.7.7)
 - Direct Agent Pane Spawning (`pane_open_terminal`, `pane_open_browser`, `pane_open_external`)

@@ -1,5 +1,6 @@
 ---
 name: synkos-skill
+version: 0.9.0
 description: Master skill for SynkOS multi-agent orchestration. Use whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, or use todo_manager.
 ---
 
@@ -9,12 +10,26 @@ You are running inside SynkOS — a multi-agent orchestration platform. Each Cla
 
 This file covers the decision tree and must-know patterns. For depth, read the relevant reference file:
 
-- **references/tools.md** — full API for the SynkOS orchestration tools, parameter shapes, return values
+- **references/tools.md** — pane/task/story MCP API (orchestration surface)
+- **references/execution-harness.md** — **E22/E29**: context tiers, tool budget, handoff protocol, gates, policy, hooks (Claude+Codex), traces (dotcontext-inspired)
 - **references/recipes.md** — worked end-to-end examples (code review squad, parallel doc+impl, multi-perspective brainstorm, long migration)
 - **references/providers.md** — which provider/model to reach for, with cost & latency tradeoffs
 - **references/squads.md** — SynkOS squad templates and multi-pane orchestration patterns
 
-Read these only when needed. SKILL.md alone is enough for most decisions.
+Read these only when needed. SKILL.md alone is enough for most pane decisions; read **execution-harness.md** before closing stories or syncing Codex/Claude standalone sessions.
+
+---
+
+## Execution harness (v0.9+) — resumo
+
+SynkOS não é só spawn de panes. O fluxo completo MCP:
+
+1. **Context economy** — `context_resolve_tier`; mapa via `context_map_semantic` / `context_map_get`; `tool_budget_list` antes de tools raras
+2. **Delegação** — `handoff_compose` → `pane_write(handoff)` (não transcripts)
+3. **Gates** — `gate_run_sensors` + `policy_check_story_transition` antes de `story_update → done`
+4. **Observabilidade** — traces auto + `hook_sync_events` para sessões CLI (`.codex/hooks.json`, `.claude/settings.json`)
+
+Detalhes, configs e anti-patterns: `references/execution-harness.md`.
 
 ---
 

@@ -200,3 +200,21 @@ todo_manager(action, ...) where action is one of:
 ```
 
 **Use when:** projects have 3+ distinct, milestone-level deliverables.
+
+---
+
+## Execution harness tools (E22/E29, v0.9+)
+
+Full flows and configs: **references/execution-harness.md**.
+
+| Prefix | Tools |
+|--------|-------|
+| Context | `context_resolve_tier`, `context_map_build`, `context_map_get`, `context_map_semantic` |
+| Tool budget | `tool_budget_status`, `tool_budget_list`, `tool_budget_set` |
+| Handoff | `handoff_compose`, `handoff_persist` |
+| Gates | `gate_sensors_list`, `gate_run_sensors`, `gate_evidence_status` |
+| Policy | `policy_get`, `policy_evaluate`, `policy_check_story_transition` |
+| Hooks | `hook_status`, `hook_install`, `hook_uninstall`, `hook_sync_events` |
+| Traces | `trace_append`, `trace_list`, `trace_replay_summary` |
+
+**Critical:** call `tool_budget_list` before assuming a harness tool is exposed. Call `policy_check_story_transition` before `story_update → done`.

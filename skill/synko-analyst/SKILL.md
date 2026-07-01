@@ -1,14 +1,7 @@
 ---
 name: synko-analyst
-version: 0.8.0
-description: >
-  Especialista em pesquisa, análise de dados e gestão do conhecimento no SynkOS.
-  Use esta skill quando o usuário pedir para pesquisar um tema, analisar dados ou evidências,
-  consolidar conhecimento disperso, criar ou atualizar páginas de wiki, documentar achados
-  de discovery, extrair padrões de múltiplas fontes, ou responder perguntas como "o que já
-  sabemos sobre X?", "quais são os riscos de Y?", "pesquise Z e documente". Ative também para
-  auditar a saúde do wiki, promover padrões para memória persistente, ou quando o contexto
-  precisar ser levantado antes de uma decisão técnica ou de produto.
+version: 0.9.0
+description: Research and analysis. Discovery, data analysis, knowledge consolidation, wiki management.
 ---
 
 # SynkOS Analyst
@@ -16,12 +9,8 @@ description: >
 ## Domain
 Research, data analysis, requirements discovery, knowledge consolidation, wiki management, and pattern extraction.
 
-## Identity
-```
-pane_set_identity(paneId: SYNKO_PANE_ID, skill: "synko-analyst", role: "analyst")
-```
-
 ## Operational Flow
+0. **Identity**: Call `pane_set_identity` using `SYNKO_PANE_ID` and your role/skill.
 1. Research topics using available tools (web search, vault search, wiki query)
 2. Document findings with clear sources and references
 3. Consolidate knowledge into wiki pages (architecture, patterns, entities, bugs)
@@ -29,10 +18,27 @@ pane_set_identity(paneId: SYNKO_PANE_ID, skill: "synko-analyst", role: "analyst"
 5. Use `wiki_lint` to detect patterns worth promoting to shared
 
 ## Commands
-- `research <topic>` — Deep research with documented sources
-- `wiki-query <question>` — Query vault memory for context
-- `wiki-ingest <source>` — Promote knowledge to wiki
-- `wiki-lint` — Audit wiki health and find promote candidates
+- `research <topic>` - Deep research with documented sources
+- `wiki-query <question>` - Query vault memory for context
+- `wiki-ingest <source>` - Promote knowledge to wiki
+- `wiki-lint` - Audit wiki health and find promote candidates
+
+## Execution Harness (E22/E29, v0.9+)
+
+Pesquisa com economia de contexto:
+1. `context_resolve_tier` — default `standard`; escalar para `full` só se wiki/story insuficientes
+2. `wiki_query` antes de ler PRD/architecture completos
+3. `context_map_get` para localizar entidades e paths relevantes
+
+Consolidar memória:
+- `wiki_save` / `wiki_ingest` / `wiki_lint` como saída padrão
+- `handoff_persist` quando discovery alimenta próxima story
+
+Stories `gateProfile: discovery` → evidência = findings no vault/wiki, não sensores de código.
+
+`tool_budget_list` no início da sessão.
+
+Referência: `synkos-skill` → `references/execution-harness.md`.
 
 ## Key Principles
 - Research without documentation is noise
@@ -40,19 +46,5 @@ pane_set_identity(paneId: SYNKO_PANE_ID, skill: "synko-analyst", role: "analyst"
 - Knowledge not in the wiki doesn't exist
 - Promote patterns, not instances
 
-## MCP Tools (role-specific subset)
-
-### Primary
-- `wiki_query` — Query vault knowledge base
-- `wiki_save` — Persist findings to wiki
-- `wiki_ingest` — Promote knowledge to persistent/shared memory
-- `wiki_lint` — Audit wiki health, detect promote candidates
-- `vault_list`, `vault_read`, `vault_write`, `vault_append`, `vault_search`
-- `memory_store`, `memory_search` — Semantic memory for cross-session recall
-- `session_resume` — Retomar contexto de pesquisa anterior
-
-### Support
-- `pane_set_identity`, `pane_spawn`, `pane_list`, `pane_write`, `pane_read`, `pane_wait_idle`
-- `pane_open_browser`, `pane_open_terminal`, `pane_open_external`
-- `todo_manager` — Track research milestones and deliverables
-- `token_usage` — Monitor context usage during deep research
+## Identity Management
+Always call `pane_set_identity` with your `paneId` (from environment variable `SYNKO_PANE_ID`), `skill` ("synko-analyst"), and `role` ("analyst") at the beginning of any session.

@@ -48,6 +48,19 @@ Se estiver em um pane SynkOS (`SYNKO_PANE_ID` disponível no ambiente), chame `p
 Use `synko-ux-design-expert` for: audits, specs, component design, design system documentation, and a11y validation within an established project.
 Use `impeccable` for: full product redesigns, shape → craft workflows with PRODUCT.md/DESIGN.md context, live browser iteration, and ambitious visual effects.
 
+## Execution Harness (E22/E29, v0.9+)
+
+Auditorias e specs:
+1. `context_resolve_tier` — `standard` (story + wiki); `full` só para design system greenfield
+2. `wiki_query` / `wiki_save` — tokens, padrões e decisões de UX no vault
+3. `tool_budget_list` antes de tools de orquestração
+
+Entrega para dev: `handoff_compose` com critérios de a11y/estados, fileList de componentes — não screenshots em texto.
+
+Stories `gateProfile: docs` → policy valida conteúdo; `code` → dev roda sensores após implementação.
+
+Referência: `synkos-skill` → `references/execution-harness.md`.
+
 ## SynkOS UI Shell (v0.9+)
 
 Source of truth: `packages/renderer/src/`. **Do not** reference `Header.tsx` — removed; shell uses `AppHeader`.
