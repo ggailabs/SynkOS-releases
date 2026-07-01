@@ -1,6 +1,6 @@
 ---
 name: synkos-skill
-version: 1.0.1
+version: 1.0.2
 description: Master skill for SynkOS multi-agent orchestration. Use whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, or use todo_manager.
 ---
 
