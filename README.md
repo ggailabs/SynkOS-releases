@@ -31,14 +31,27 @@ sudo dpkg -i synko_0.9.0_amd64.deb
 
 ### macOS
 
-| File | Size | Description |
-|------|------|-------------|
-| `SynkOS-0.9.0.dmg` | ~160 MB | macOS Disk Image |
+| File | Description |
+|------|-------------|
+| `SynkOS-<version>.dmg` | macOS Disk Image (Apple Silicon, unsigned) |
 
-**Installation:**
-1. Open the `.dmg` file (or build locally on macOS)
-2. Drag `SynkOS.app` to Applications
-3. First launch: Right-click → Open (bypass Gatekeeper)
+**Installation (recommended — evita "arquivo danificado"):**
+
+```bash
+curl -sL https://raw.githubusercontent.com/ggailabs/SynkOS-releases/main/scripts/install-mac.sh | bash
+```
+
+O build macOS ainda não é assinado pela Apple; o Gatekeeper marca downloads com quarantine e exibe *"danificado"*. O script remove a quarantine e instala em `/Applications`.
+
+**Manual:** baixe o `.dmg`, depois:
+
+```bash
+xattr -cr ~/Downloads/SynkOS*.dmg
+# montar, copiar SynkOS.app → Applications
+xattr -cr /Applications/SynkOS.app
+```
+
+Primeira abertura: clique direito → **Abrir** (ou Ajustes → Privacidade e Segurança → Abrir assim mesmo).
 
 ### Windows
 
