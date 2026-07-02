@@ -12,7 +12,7 @@ Disponível a partir de **v0.9.0**; kickoff cognitivo (E31) e delegação parale
 | Tier | Quando | Leitura |
 |------|--------|---------|
 | `minimal` | typo, rename, fix pontual | story file apenas |
-| `standard` | story ativa (default) | story + `wiki_query` para fatos |
+| `standard` | story ativa (default) | story + `wiki_query` ou `context_find` para fatos |
 | `full` | onboarding, discovery, épico | `context_map_semantic(compact)` antes de docs inteiros |
 
 ### Tools
@@ -101,6 +101,19 @@ UI: stories kickoff em `draft` exibem badge **aguardando discovery** até eviden
 
 - `session_resume` — retomar sessão anterior (perfil `minimal` sempre expõe)
 - `wiki_query scope:sessions query:{story-id}` — último handoff antes de retomar trabalho
+- `context_find query:{topic} sources:[wiki,memories] layer:auto` — busca unificada vault (E33); use em vez de N× `wiki_query` + `skill_list` ao explorar contexto
+
+### Memória pós-sessão (E33-S4)
+
+Após milestone (e **somente** se `session_handoff` condicional aplicar): seguir `references/session-memory-checklist.md`.
+
+Atalho para decisões duráveis:
+
+```text
+wiki_ingest sourceType:session sourceId:{story} summary:"..." touchedPages:[sessions] promoteTrajectory:true
+```
+
+Isso append em `wiki/sessions` **e** `memories/trajectories.md` (timeline datada).
 
 ---
 

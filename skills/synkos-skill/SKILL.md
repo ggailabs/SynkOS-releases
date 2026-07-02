@@ -1,6 +1,6 @@
 ---
 name: synkos-skill
-version: 1.0.6
+version: 1.0.7
 description: Master skill for SynkOS multi-agent orchestration. Use whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, or use todo_manager.
 ---
 
@@ -12,6 +12,7 @@ This file covers the decision tree and must-know patterns. For depth, read the r
 
 - **references/tools.md** — pane/task/story MCP API (orchestration surface)
 - **references/execution-harness.md** — **E22/E29**: context tiers, tool budget, handoff protocol, gates, policy, hooks (Claude+Codex), traces (dotcontext-inspired)
+- **references/session-memory-checklist.md** — **E33-S4**: o que promover após sessão (`trajectories`, `entities`, `wiki_ingest promoteTrajectory`)
 - **references/recipes.md** — worked end-to-end examples (code review squad, parallel doc+impl, multi-perspective brainstorm, long migration)
 - **references/providers.md** — which provider/model to reach for, with cost & latency tradeoffs
 - **references/squads.md** — SynkOS squad templates and multi-pane orchestration patterns
