@@ -1,6 +1,6 @@
 ---
 name: synkos-skill
-version: 1.0.2
+version: 1.0.6
 description: Master skill for SynkOS multi-agent orchestration. Use whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, or use todo_manager.
 ---
 
@@ -17,6 +17,23 @@ This file covers the decision tree and must-know patterns. For depth, read the r
 - **references/squads.md** — SynkOS squad templates and multi-pane orchestration patterns
 
 Read these only when needed. SKILL.md alone is enough for most pane decisions; read **execution-harness.md** before closing stories or syncing Codex/Claude standalone sessions.
+
+---
+
+## Skill activation (mandatory — token economy)
+
+When the user invokes `synkos-skill` **without a concrete task** (e.g. "ativa a skill", "synkos-skill", projeto novo sem objetivo):
+
+- Reply in **≤10 lines**. No tables, no tool matrices, no Pattern A–D dump.
+- **Do NOT** call `tool_budget_list`, `pane_list`, `context_map_*`, or read `references/*.md` unless the user explicitly asks.
+- **Do NOT** list blocked/allowed MCP tools or orchestration cookbooks unprompted.
+- Say: skill active → project/workspace if known → backlog/story in one line → **one question** about intent.
+
+Example (enough):
+
+> SynkOS skill ativo. Projeto: X. Sem story ativa; backlog: Y. O que você quer fazer?
+
+When the user **has a concrete task**: skip activation ceremony — execute inline or delegate per the decision tree below. Invoking the skill is not permission to audit the harness.
 
 ---
 
