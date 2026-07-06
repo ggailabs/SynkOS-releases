@@ -1,6 +1,6 @@
 ---
 name: synkos-skill
-version: 1.0.7
+version: 1.1.0
 description: Master skill for SynkOS multi-agent orchestration. Use whenever you need to spawn panes, delegate work to agents, manage parallel execution, coordinate multi-model squads, or use todo_manager.
 ---
 
@@ -8,16 +8,16 @@ description: Master skill for SynkOS multi-agent orchestration. Use whenever you
 
 You are running inside SynkOS — a multi-agent orchestration platform. Each Claude session is a visible pane in a workspace grid. You can spawn more panes, delegate work to them, run multiple models in parallel, and orchestrate squad runs.
 
-This file covers the decision tree and must-know patterns. For depth, read the relevant reference file:
+This file covers the decision tree and must-know patterns. For depth, read the relevant reference file **only when needed**:
 
-- **references/tools.md** — pane/task/story MCP API (orchestration surface)
-- **references/execution-harness.md** — **E22/E29**: context tiers, tool budget, handoff protocol, gates, policy, hooks (Claude+Codex), traces (dotcontext-inspired)
-- **references/session-memory-checklist.md** — **E33-S4**: o que promover após sessão (`trajectories`, `entities`, `wiki_ingest promoteTrajectory`)
-- **references/recipes.md** — worked end-to-end examples (code review squad, parallel doc+impl, multi-perspective brainstorm, long migration)
-- **references/providers.md** — which provider/model to reach for, with cost & latency tradeoffs
-- **references/squads.md** — SynkOS squad templates and multi-pane orchestration patterns
+- **references/tools.md** — assinaturas completas, return shapes e edge cases da API pane/handoff/todo
+- **references/execution-harness.md** — context tiers, tool budget, handoff protocol, gates, policy, hooks (Claude+Codex), traces
+- **references/session-memory-checklist.md** — o que promover após sessão (`trajectories`, `entities`, `wiki_ingest promoteTrajectory`)
+- **references/recipes.md** — worked end-to-end examples (review squad, doc+impl paralelo, brainstorm multi-modelo, migração longa, fan-in assíncrono)
+- **references/providers.md** — classe de modelo por tipo de trabalho; IDs sempre via `pane_list_providers()`
+- **references/squads.md** — squad templates e quando preferir run com gates a fan-out ad hoc
 
-Read these only when needed. SKILL.md alone is enough for most pane decisions; read **execution-harness.md** before closing stories or syncing Codex/Claude standalone sessions.
+SKILL.md alone is enough for most pane decisions; read **execution-harness.md** before closing stories or syncing Codex/Claude standalone sessions.
 
 ---
 
@@ -38,23 +38,21 @@ When the user **has a concrete task**: skip activation ceremony — execute inli
 
 ---
 
-## Execution harness (v1.0+) — resumo
+## Execution harness — resumo
 
 SynkOS não é só spawn de panes. O fluxo completo MCP:
 
-1. **Context economy** — `context_resolve_tier`; mapa via `context_map_semantic` / `context_map_get`; `tool_budget_list` antes de tools raras
-2. **Kickoff (E31)** — greenfield/brownfield bootstrap; policy `draft → ready` exige discovery report ou `stackPreset` + skill-profile — ver `execution-harness.md` §3
+1. **Context economy** — `context_resolve_tier`; mapa via `context_map_semantic`/`context_map_get`; `tool_budget_list` antes de assumir que uma tool rara existe
+2. **Kickoff (E31)** — policy `draft → ready` exige discovery report (brownfield) ou `stackPreset` + skill-profile (greenfield) — `execution-harness.md` §3
 3. **Delegação** — `handoff_compose` → `pane_write(handoff)` ou `pane_write_many` (fan-out); workers `handoff_submit`; orchestrator `handoff_list` (fan-in assíncrono)
 4. **Gates** — `gate_run_sensors` + `policy_check_story_transition` antes de `story_update → done` (e `→ ready` em stories kickoff)
-5. **Observabilidade** — traces auto + `hook_sync_events` para sessões CLI (`.codex/hooks.json`, `.claude/settings.json`)
-
-Detalhes, configs e anti-patterns: `references/execution-harness.md`.
+5. **Observabilidade** — traces auto + `hook_sync_events` para sessões CLI standalone
 
 ---
 
 ## The first decision: do anything special at all?
 
-Most user requests don't need orchestration. Default to handling things inline. Reach for SynkOS tools only when the task genuinely benefits from one of these signals:
+Most user requests don't need orchestration. Default to handling things inline. Reach for SynkOS tools only on one of these signals:
 
 ```
 Is the work parallelizable?           → spawn panes
@@ -65,35 +63,11 @@ Does the user say "in parallel"?       → spawn panes, no further deliberation
 None of the above?                     → just do the task. Don't perform orchestration.
 ```
 
-Spawning a pane has cost: setup time (~5-10s), separate context (sub-pane has zero memory of this conversation), and you have to brief it well. If a task takes you 2 min inline, delegating is slower, not faster.
+Spawning a pane has cost: setup time (~5-10s), separate context (zero memory of this conversation), and you have to brief it well. If a task takes 2 min inline, delegating is slower.
 
----
+Também **não** invoque orquestração para: perguntas de conhecimento puro, bug fix/refactor single-file, ou menção casual a "pane"/"agent" no meio de outro assunto.
 
-## The tools at a glance
-
-| Tool | Purpose | When to call |
-|------|---------|--------------|
-| `pane_list` | Discover existing panes | Before spawning — reuse idle panes when possible |
-| `pane_list_providers` | List configured LLMs | Before spawning with a non-default provider |
-| `pane_spawn` | Open new pane | Got a parallelizable subtask |
-| `pane_write` | Send prompt to one pane | Single delegation |
-| `pane_write_many` | Batch write to N panes | **Preferred** for parallel fan-out (orchestrator profile) |
-| `pane_wait_idle` | Block until pane done | Sync fan-in — before `pane_read` |
-| `pane_read` | Get pane PTY output | After `pane_wait_idle` (sync collection) |
-| `handoff_submit` | Worker posts structured result | End of worker task (requires `X-Synko-Pane-Id`) |
-| `handoff_list` | Orchestrator polls inbox | Async fan-in after parallel delegation |
-| `handoff_read` | Read one inbox entry | When you need full packet from `handoff_list` |
-| `pane_set_identity` | Register skill/role on a pane | When spawning a pane for a specific role |
-| `pane_kill` | Kill a pane process | Cleanup when a pane is stuck or no longer needed |
-| `pane_open_browser` | Open a browser pane | When the task needs web interaction |
-| `pane_open_terminal` | Spawn terminal pane | For shell commands or long-running processes |
-| `todo_manager` | Visible task list | Projects with 3+ milestones |
-
-Full signatures, return shapes, and edge cases live in `references/tools.md`.
-
-**Tool budget:** `pane_write_many` and `handoff_list` are orchestrator-only. Workers use `handoff_submit`. Call `tool_budget_list` if unsure.
-
-**Squad runs:** `squad_run_*` templates with gates remain the path for structured multi-phase work. Patterns B/D are for **ad hoc** parallel delegation — they complement, not replace, squad runs.
+Assinaturas e edge cases de todas as tools: `references/tools.md`. Perfis: `pane_write_many` e `handoff_list` são orchestrator-only; workers usam `handoff_submit`. `squad_run_*` (templates com gates) continua sendo o caminho para trabalho multi-fase estruturado — Patterns B/D são para delegação **ad hoc**.
 
 ---
 
@@ -101,117 +75,61 @@ Full signatures, return shapes, and edge cases live in `references/tools.md`.
 
 ### Pattern A: delegate to the worker pane (most common)
 
-You always have a worker pane available — its ID is at the top of your system prompt under "squad orchestrator worker". Default `T06AfShP`. Use it for execution work that would block this pane.
+You always have a worker pane available — its ID is at the top of your system prompt under "squad orchestrator worker" (or discover via `pane_list()` and reuse an idle pane before spawning).
 
 ```
 pane_write(paneId: <worker-id>, mode: "handoff", task: "<self-contained task>", storyId: "...")
-pane_wait_idle(paneId: <worker-id>, timeoutMs: 300000)   # 5 min for non-trivial
+pane_wait_idle(paneId: <worker-id>, timeoutMs: 300000)   # antes de pane_read — ler pane rodando retorna output parcial
 pane_read(paneId: <worker-id>, lastN: 200)
 ```
 
-The worker has no memory of this conversation. Brief it like a colleague who just walked in: goal, files involved, expected output, where to save it. Prefer `mode=handoff` + `handoff_compose` over raw text dumps.
+The worker has no memory of this conversation. Brief it like a colleague who just walked in: goal, files involved, expected output, where to save it. Prefer `mode=handoff` + `handoff_compose` over raw text dumps — vague briefs are the #1 delegation failure.
 
 ### Pattern B: parallel fan-out (prefer `pane_write_many`)
 
-Work splits into N independent subtasks. Spawn N panes, then write to **all in one tool call** with `pane_write_many`.
+Work splits into N independent subtasks. Spawn N panes, then write to **all in one tool call**:
 
 ```
-# Turn 1 — spawn all panes
-a = pane_spawn(model: "claude-sonnet-4-6", role: "synko-dev")
-b = pane_spawn(model: "claude-sonnet-4-6", role: "synko-dev")
-
-# Turn 1 (same turn) — batch write (one MCP call)
+# Turn 1 — spawn all, then batch write (one MCP call, max 16 items)
+a = pane_spawn(model: <workhorse>, role: "synko-dev")
+b = pane_spawn(model: <workhorse>, role: "synko-dev")
 pane_write_many(writes: [
   { paneId: a, mode: "handoff", task: "<task A>", storyId: "..." },
   { paneId: b, mode: "handoff", task: "<task B>", storyId: "..." },
 ])
 ```
 
-**Why `pane_write_many` over N× `pane_write`:** one atomic batch, partial-failure reporting per pane, and models don't have to guess they should batch multiple tool calls. Max 16 items per batch.
-
-If you spawn-write-wait-read sequentially per pane, you've lost the parallelism. The whole point is concurrent execution.
+One atomic batch com partial-failure report por pane. If you spawn-write-wait-read sequentially per pane, you've lost the parallelism. Sempre passe `role` no spawn (ou `pane_set_identity` depois) para o tool routing funcionar.
 
 ### Pattern C: multi-model squad
 
-Different models for different cognitive jobs in the same task. **Always call `pane_list_providers()` first** — provider IDs are machine-specific and unknown IDs are rejected.
-
-```
-opus    = pane_spawn(model: "claude-opus-4-7")              # architecture / hard reasoning
-gemini  = pane_spawn(providerId: "gemini-cli", model: "...") # web search / fast iteration
-mimo    = pane_spawn(providerId: "mimo-FxzXvc", model: "...") # cheap bulk work
-```
-
-See `references/providers.md` for which model to reach for in which situation.
+Different models for different cognitive jobs. **Always call `pane_list_providers()` first** — provider IDs are machine-specific and unknown IDs are rejected. Escolha por classe (ver `providers.md`): raciocínio-pesado para arquitetura/review crítico, workhorse para execução, bulk-barato para sweeps, Gemini para busca web, Codex para voz divergente.
 
 ### Pattern D: async fan-in (`handoff_submit` + `handoff_list`)
 
-After Pattern B fan-out, workers can return structured results **without** the orchestrator blocking on `pane_wait_idle` + `pane_read` for every pane.
-
-**Worker pane** (end of task):
+After Pattern B fan-out, workers return structured results **without** the orchestrator blocking on every pane. Inclua no brief do worker: ao terminar, `handoff_submit(summary, status, storyId, fileList)` — sem isso o fan-in fica cego.
 
 ```
-handoff_submit(
-  summary: "Implemented webhook handler; 3 files changed",
-  status: "completed",
-  storyId: "...",
-  task: "...",
-  fileList: ["src/..."],
-)
-```
-
-**Orchestrator** (poll when ready — e.g. after other work or on a timer):
-
-```
+# Orchestrator, quando pronto (após outro trabalho ou timer):
 handoff_list(storyId: "...", sinceMinutes: 30)
-handoff_read(entryId: "<paneId-timestamp>")   # optional — full packet
+handoff_read(entryId: "<paneId-timestamp>")   # opcional — packet completo
 ```
 
-Vault path: `.synko/vault/projects/{projectId}/handoffs/inbox/{paneId}-{ts}.json`
-
-Sync collection (`pane_wait_idle` + `pane_read`) still works when you need live PTY output. Pattern D is for structured deliverables the orchestrator integrates manually — no auto-merge.
+Vault: `.synko/vault/projects/{projectId}/handoffs/inbox/{paneId}-{ts}.json`. Sync collection (`pane_wait_idle` + `pane_read`) still works for live PTY output. Integração é manual — no auto-merge.
 
 ---
 
 ## todo_manager: when, how, and why
 
-Use when the project has **3+ distinct, milestone-level tasks** ("Build auth", "Add database", "Create dashboard"). Skip for single-page builds, trivial requests, or conversational questions.
+Use when the project has **3+ distinct, milestone-level tasks**. Skip for single-task work — it's overhead.
 
 ```
 todo_manager(action: "set_tasks", tasks: [...])    # max 7 — first becomes in_progress
-todo_manager(action: "move_to_task", moveToTask: "Add database")  # call as soon as a task completes
+todo_manager(action: "move_to_task", moveToTask: "...")  # imediatamente ao concluir cada milestone — não batche
 todo_manager(action: "mark_all_done")              # at the end
 ```
 
-Why milestone-level only: micro-steps create noise, the user scans for progress at a glance. "Wire up signup form" reads as progress; "Add import statement" reads as filler.
-
-Call `move_to_task` immediately when each milestone completes — don't batch. Live progress is the feature.
-
----
-
-## When NOT to invoke this skill
-
-- "What is X?" / "explain Y" — pure knowledge questions, no orchestration involved
-- Bug fixes, refactors, single-file edits — inline work, no parallelism
-- Anything where the user is mid-conversation about an unrelated topic and just mentions "open" or "pane" or "agent" in passing
-
-The skill triggers when there's actual orchestration work. If in doubt, just do the task.
-
----
-
-## Common mistakes
-
-1. **Reading before waiting** — `pane_read` on a running pane returns partial output. Always `pane_wait_idle` first (sync path).
-2. **N× `pane_write` when `pane_write_many` fits** — use the batch tool for parallel delegation.
-3. **Sequential when parallel was possible** — spawn + `pane_write_many` belong in minimal turns, not one pane per turn.
-4. **Vague briefs to sub-panes** — they have zero context. Spell out files, goals, output format, save path.
-5. **Spawning when worker exists** — call `pane_list()` first, reuse the idle worker.
-6. **Non-default provider without listing first** — IDs vary per machine; unknown IDs error out.
-7. **Micro-step todos** — todo_manager is for 3-7 milestones, not every action.
-8. **Using todo_manager for single-task work** — it's overhead for trivial requests.
-9. **Forgetting `move_to_task`** — the user can't see live progress if you batch updates.
-10. **Forgetting `pane_set_identity`** — always register the role/skill on spawned worker panes so tools can route properly.
-11. **Workers forgetting `handoff_submit`** — orchestrator can't use `handoff_list` if workers only write to PTY.
-12. **Replacing `squad_run_*` with ad hoc fan-out** — use templates when gates, phases, and memory policy matter.
+Milestone-level only: "Wire up signup form" reads as progress; "Add import statement" reads as filler. Live progress is the feature — `todo_manager` é UI, não substituto de ownership de tasks (`task_create`/`task_claim`).
 
 ---
 

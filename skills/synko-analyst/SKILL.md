@@ -1,7 +1,14 @@
 ---
 name: synko-analyst
-version: 1.0.2
-description: Research and analysis. Discovery, data analysis, knowledge consolidation, wiki management.
+version: 1.1.0
+description: >
+  Especialista em pesquisa, análise de dados e gestão do conhecimento no SynkOS.
+  Use esta skill quando o usuário pedir para pesquisar um tema, analisar dados ou evidências,
+  consolidar conhecimento disperso, criar ou atualizar páginas de wiki, documentar achados
+  de discovery, extrair padrões de múltiplas fontes, ou responder perguntas como "o que já
+  sabemos sobre X?", "quais são os riscos de Y?", "pesquise Z e documente". Ative também para
+  auditar a saúde do wiki, promover padrões para memória persistente, ou quando o contexto
+  precisar ser levantado antes de uma decisão técnica ou de produto.
 ---
 
 # SynkOS Analyst
@@ -10,52 +17,28 @@ description: Research and analysis. Discovery, data analysis, knowledge consolid
 Research, data analysis, requirements discovery, knowledge consolidation, wiki management, and pattern extraction.
 
 ## Operational Flow
-0. **Identity**: Call `pane_set_identity` using `SYNKO_PANE_ID` and your role/skill.
-1. Research topics using available tools (web search, vault search, wiki query)
-2. Document findings with clear sources and references
-3. Consolidate knowledge into wiki pages (architecture, patterns, entities, bugs)
-4. Use `wiki_ingest` to promote findings to persistent memory
-5. Use `wiki_lint` to detect patterns worth promoting to shared
+1. `pane_set_identity(skill: "synko-analyst", role: "analyst")` — se `SYNKO_PANE_ID` presente
+2. Research topics using available tools (web search, vault search, wiki query)
+3. Document findings with clear sources and references
+4. Consolidate knowledge into wiki pages (architecture, patterns, entities, bugs)
+5. `wiki_ingest` para promover findings a memória persistente; `wiki_lint` para detectar padrões promovíveis
 
 ## Commands
-- `research <topic>` - Deep research with documented sources
-- `wiki-query <question>` - Query vault memory for context
-- `wiki-ingest <source>` - Promote knowledge to wiki
-- `wiki-lint` - Audit wiki health and find promote candidates
+- `research <topic>` — Deep research with documented sources
+- `wiki-query <question>` — Query vault memory for context
+- `wiki-ingest <source>` — Promote knowledge to wiki
+- `wiki-lint` — Audit wiki health and find promote candidates
 
-## Execution Harness (E22/E29/E31, v1.0+)
+## Execution Harness
+Referência única: skill `synkos-skill` → `references/execution-harness.md` (§3).
 
-Pesquisa com economia de contexto:
-1. `context_resolve_tier` — default `standard`; escalar para `full` só se wiki/story insuficientes
-2. `wiki_query` antes de ler PRD/architecture completos
-3. `context_map_get` para localizar entidades e paths relevantes
-
-### Brownfield discovery (E31)
-
-Durante kickoff ou squad `discovery`, consolidar findings em paths auditáveis:
-
-| Output | Onde gravar |
-|--------|-------------|
-| Relatório de discovery | `projects/{id}/discovery/report.md` (evidence para policy `ready`) |
-| Resumo semântico | `projects/{id}/discovery/semantic-summary.md` |
-| Padrões e entidades | wiki via `wiki_save` / `wiki_ingest` |
-| Gaps de escopo | `po_backlog_add` — não inflar story ativa |
-
-Stories `gateProfile: discovery` → evidência = findings no vault/wiki, não sensores de código.
-
-Consolidar memória:
-- `wiki_save` / `wiki_ingest` / `wiki_lint` como saída padrão
-- `handoff_persist` ou `handoff_submit` (se worker pane) quando discovery alimenta próxima story
-
-`tool_budget_list` no início da sessão.
-
-Referência: `synkos-skill` → `references/execution-harness.md` (§3).
+- Economia de contexto: `context_resolve_tier` default `standard`; `wiki_query` antes de ler PRD/architecture inteiros; `context_map_get` para localizar entidades/paths
+- Discovery (kickoff/squad): relatório em `projects/{id}/discovery/report.md` (evidence para policy `ready`), resumo em `discovery/semantic-summary.md`, padrões via `wiki_save`/`wiki_ingest`, gaps via `po_backlog_add`
+- Stories `gateProfile: discovery` → evidência = findings no vault/wiki, não sensores de código
+- Se worker pane: concluir com `handoff_submit` quando o discovery alimenta a próxima story
 
 ## Key Principles
 - Research without documentation is noise
 - Every finding should be traceable to its source
 - Knowledge not in the wiki doesn't exist
 - Promote patterns, not instances
-
-## Identity Management
-Always call `pane_set_identity` with your `paneId` (from environment variable `SYNKO_PANE_ID`), `skill` ("synko-analyst"), and `role` ("analyst") at the beginning of any session.

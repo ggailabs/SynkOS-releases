@@ -1,354 +1,140 @@
 # SynkOS Recipes — Worked Examples
 
-End-to-end orchestration recipes. Each recipe shows the user request, the decision (why orchestration is the right move), and the exact sequence of tool calls.
+End-to-end orchestration recipes: the user request, why orchestration is the right move, and the exact tool sequence.
+
+Modelos são referidos por **classe** (raciocínio-pesado / workhorse / bulk-barato — ver `providers.md`). Resolva IDs reais com `pane_list_providers()`.
 
 ---
 
-## Recipe 1: Two-pane code review squad
-
-### When this fits
+## Recipe 1: Two-pane code review squad (critique → fix)
 
 > User: "Review the auth flow I just merged and propose fixes."
 
-Code review benefits from two cognitive jobs done by different models:
-1. **Critique** (Opus, slow + thorough): find issues, don't try to fix yet.
-2. **Remediation** (Sonnet, fast + execution-oriented): given the critique, write the patch.
-
-Doing both in one head muddles the critique with implementation bias. Splitting models gets cleaner output and they run in parallel.
-
-### Sequence
-
-**Turn 1 — spawn both, write to both:**
+Duas etapas cognitivas com dependência: **critique** (raciocínio pesado, achar problemas sem viés de implementação) e **remediation** (workhorse, escrever o patch a partir da crítica). O fixer depende do output do critic — sequencie pelo orchestrator, **nunca** por timing ("wait 5 minutes" é frágil e proibido).
 
 ```
-critic = pane_spawn(model: "claude-opus-4-7")
-fixer  = pane_spawn(model: "claude-sonnet-4-6")
+# Turn 1 — critic
+critic = pane_spawn(model: <raciocínio-pesado>, role: "synko-qa")
+pane_write(critic, mode: "handoff", storyId: "...", task: """
+Review src/auth/ (read every file). Output structured critique to /tmp/auth-review.md:
+security issues (by severity), logic bugs, maintainability, what's done well.
+Critique only — no fixes. Save and stop.""")
+pane_wait_idle(critic, timeoutMs: 600000)
 
-pane_write(critic, """
-You are reviewing the auth flow at src/auth/. Read every file in that directory.
-Output a structured critique to /tmp/auth-review.md with:
-- Security issues (rank by severity)
-- Logic bugs
-- Code smell / maintainability concerns
-- What's done well
-DO NOT propose fixes yet. Critique only. Save the file and stop.
-""")
+# Turn 2 — só depois que a crítica existe, dispare o fixer
+fixer = pane_spawn(model: <workhorse>, role: "synko-dev")
+pane_write(fixer, mode: "handoff", storyId: "...", task: """
+Read /tmp/auth-review.md. For each issue, propose a concrete patch as unified diff
+in /tmp/auth-fixes.diff. Don't apply changes.""")
+pane_wait_idle(fixer, timeoutMs: 600000)
 
-pane_write(fixer, """
-Wait 5 minutes, then read /tmp/auth-review.md (it will exist by then — another agent
-is producing it). Based on each issue, propose a concrete code patch.
-Output unified diffs to /tmp/auth-fixes.diff. Don't apply changes — just write the diff.
-""")
+# Turn 3 — collect
+Read("/tmp/auth-review.md"); Read("/tmp/auth-fixes.diff")
 ```
 
-**Turn 2 — wait for both:**
-
-```
-pane_wait_idle(critic, timeoutMs: 600000)   # 10 min — Opus is thorough
-pane_wait_idle(fixer,  timeoutMs: 600000)
-```
-
-**Turn 3 — collect:**
-
-```
-critique = Read("/tmp/auth-review.md")
-patches  = Read("/tmp/auth-fixes.diff")
-```
-
-Now present both to the user. The critic and fixer never share context, but the fixer reads the critique file — coordination via filesystem.
-
-### Why this is better than inline
-
-You'd otherwise read the auth flow, critique it, then propose fixes — all sequentially, all in one head. Two panes runs concurrently and produces cleaner separation of concerns.
+Separação de modelos dá crítica mais limpa; o orchestrator é quem sabe quando a dependência foi satisfeita.
 
 ---
 
 ## Recipe 2: Doc + implementation in parallel
 
-### When this fits
-
 > User: "Add a webhook endpoint for Stripe events. Include docs."
 
-Docs and impl are independent — both depend on the same spec, neither blocks the other. Doing them in series wastes wall-clock time.
+Docs e impl são independentes — ambos dependem da mesma spec, nenhum bloqueia o outro.
 
-### Sequence
-
-**Turn 1 — define the spec inline (this is the shared anchor), then fan out:**
-
-First, write the spec yourself — it's small and high-leverage:
+**Turn 1 — o orchestrator escreve a spec (âncora compartilhada), depois fan-out:**
 
 ```
-Write("/tmp/stripe-webhook-spec.md", """
-## Stripe Webhook Endpoint
+Write("/tmp/stripe-webhook-spec.md", "<spec: endpoint, eventos, verificação de assinatura, SLA>")
 
-POST /api/webhooks/stripe
-
-Events handled:
-- checkout.session.completed → mark order paid
-- payment_intent.payment_failed → log + notify
-- customer.subscription.updated → update local sub state
-
-Verify signature with STRIPE_WEBHOOK_SECRET via stripe.webhooks.constructEvent.
-Return 200 within 5s or Stripe retries. Log all events to webhooks_log table.
-""")
-```
-
-Now fan out:
-
-```
-impl_pane = pane_spawn(model: "claude-sonnet-4-6")
-docs_pane = pane_spawn(model: "claude-haiku-4-5")    # docs are simpler — cheaper model fine
+impl = pane_spawn(model: <workhorse>, role: "synko-dev")
+docs = pane_spawn(model: <bulk-barato>)     # docs são simples
 
 pane_write_many(writes: [
-  {
-    paneId: impl_pane,
-    mode: "handoff",
-    task: """
-Read /tmp/stripe-webhook-spec.md — that's your spec.
-Implement the endpoint at src/app/api/webhooks/stripe/route.ts.
-Follow the existing route patterns in src/app/api/. Add unit tests.
-Run `npm run typecheck` when done. Save list of files changed to /tmp/impl-files.txt.
-""",
-    storyId: "..."
-  },
-  {
-    paneId: docs_pane,
-    mode: "handoff",
-    task: """
-Read /tmp/stripe-webhook-spec.md — that's your spec.
-Write user-facing docs at docs/integrations/stripe-webhooks.md covering:
-- What events we handle
-- How to test locally with Stripe CLI
-- Production deployment checklist
-- Troubleshooting common errors
-Save and stop.
-""",
-    storyId: "..."
-  },
+  { paneId: impl, mode: "handoff", storyId: "...",
+    task: "Read /tmp/stripe-webhook-spec.md. Implement endpoint following existing patterns in src/app/api/. Add tests, run typecheck. Save changed-files list to /tmp/impl-files.txt." },
+  { paneId: docs, mode: "handoff", storyId: "...",
+    task: "Read /tmp/stripe-webhook-spec.md. Write user docs at docs/integrations/stripe-webhooks.md: events, local testing, deploy checklist, troubleshooting." },
 ])
 ```
 
-**Turn 2 — wait:**
+**Turn 2 — wait ambos; Turn 3 — verificar e reportar.**
 
-```
-pane_wait_idle(impl_pane, timeoutMs: 600000)
-pane_wait_idle(docs_pane, timeoutMs: 300000)
-```
-
-**Turn 3 — verify and report:**
-
-```
-files = Read("/tmp/impl-files.txt")
-docs  = Read("docs/integrations/stripe-webhooks.md")
-# Spot-check the implementation files in the orchestrator pane
-```
-
-### Pitfall to avoid
-
-Don't write the spec inside one of the sub-panes and have the other "wait for it". Filesystem coordination across panes works but adds fragility (timing, partial reads). When something is shared input for multiple panes, write it from the orchestrator first, then fan out.
+**Pitfall:** não escreva a spec dentro de um sub-pane e faça o outro "esperar por ela" — input compartilhado sai do orchestrator antes do fan-out.
 
 ---
 
 ## Recipe 3: Multi-perspective brainstorm
 
-### When this fits
-
 > User: "I'm naming a new product. Help me brainstorm — give me a few angles."
 
-Brainstorms get repetitive when one model does them. Different models have different priors, training, and rhetorical defaults. Run the same prompt through 3 models in parallel; the diversity is the value.
-
-### Sequence
-
-**Turn 1 — list providers (machine-specific IDs), then spawn 3 panes:**
+Um modelo se auto-correlaciona; 3 providers divergem de verdade. A síntese (que só o orchestrator pode fazer) é onde está o valor.
 
 ```
-providers = pane_list_providers()
-# Confirm: claude-oauth, gemini-cli, codex-cli all present
+providers = pane_list_providers()   # IDs por máquina — obrigatório
 
-opus    = pane_spawn(model: "claude-opus-4-7")
-gemini  = pane_spawn(providerId: "gemini-cli", model: "gemini-2.5-flash")
-codex   = pane_spawn(providerId: "codex-cli",  model: "gpt-5.4")
+a = pane_spawn(model: <raciocínio-pesado>)
+b = pane_spawn(providerId: <gemini>, model: <modelo do provider>)
+c = pane_spawn(providerId: <codex>,  model: <modelo do provider>)
 
-prompt = """
-I'm naming a new product. It's a SwipeScale-style lead-rating tool —
-swipe left/right on inbound leads, AI learns your preferences over time.
-Target audience: B2B sales teams.
+prompt = "<mesmo brief para os 3; cada um salva em /tmp/names-<provider>.md>"
+pane_write(a, prompt); pane_write(b, prompt); pane_write(c, prompt)
 
-Generate 10 product names. For each, give:
-- The name
-- The angle (what it evokes)
-- Why it might fail
-
-Be willing to be weird. Save to /tmp/names-<your-model>.md.
-"""
-
-pane_write(opus,   prompt + "\nUse filename /tmp/names-opus.md")
-pane_write(gemini, prompt + "\nUse filename /tmp/names-gemini.md")
-pane_write(codex,  prompt + "\nUse filename /tmp/names-codex.md")
+# wait os 3 → ler os 3 arquivos → sintetizar os 5 mais fortes com justificativa
 ```
-
-**Turn 2 — wait for all:**
-
-```
-pane_wait_idle(opus,   timeoutMs: 300000)
-pane_wait_idle(gemini, timeoutMs: 300000)
-pane_wait_idle(codex,  timeoutMs: 300000)
-```
-
-**Turn 3 — read all three, synthesize:**
-
-```
-opus_names    = Read("/tmp/names-opus.md")
-gemini_names  = Read("/tmp/names-gemini.md")
-codex_names   = Read("/tmp/names-codex.md")
-```
-
-Now your job in the orchestrator pane is the synthesis: "Here are 30 candidates from 3 models. The strongest 5, with reasoning across perspectives:"
-
-### Why this beats one big prompt
-
-A single model self-correlates — its 30 names will share rhetorical DNA. Three models give you genuine divergence. The synthesis step (which only the orchestrator can do, because only it sees all three outputs) is where the value lands.
 
 ---
 
 ## Recipe 4: Long-running migration with todo_manager
 
-### When this fits
+> User: "Migrate payments from Stripe Checkout to Payment Intents — API, DB schema, webhooks, frontend."
 
-> User: "Migrate the payment system from Stripe Checkout to Stripe Payment Intents. We need to update the API, the DB schema, the webhooks, and the frontend."
-
-This is a 4-milestone project. The user wants visible progress. Sequential, each step depends on the prior, but a worker pane can do the heavy lifting while the orchestrator narrates.
-
-### Sequence
-
-**Turn 1 — set up the visible task list:**
+Sequencial (cada etapa depende da anterior), 4–5 milestones, trabalho pesado num worker enquanto o orchestrator narra progresso.
 
 ```
-todo_manager(action: "set_tasks", tasks: [
-  "Update DB schema for Payment Intents",
-  "Refactor API routes to use PaymentIntents",
-  "Update webhook handlers",
-  "Update frontend checkout flow",
-  "Run end-to-end tests"
-])
-```
+todo_manager(action: "set_tasks", tasks: ["DB schema", "API routes", "Webhooks", "Frontend", "E2E tests"])
 
-**Turn 2 — delegate task 1 to the worker:**
-
-```
-worker = "T06AfShP"   # from system prompt; or use pane_list() to discover
-
-pane_write(worker, """
-Migration task 1 of 5: DB schema update for Stripe Payment Intents.
-
-Current: orders table has stripe_session_id, stripe_checkout_url
-Target:  add stripe_payment_intent_id, stripe_client_secret; deprecate the old fields
-         (don't drop yet — we'll do that after rollout)
-
-Generate the Supabase migration in supabase/migrations/. Don't apply it.
-Save the migration filename to /tmp/migration-1-file.txt.
-Output a one-paragraph summary to /tmp/migration-1-summary.md.
-""")
-pane_wait_idle(worker, timeoutMs: 600000)
-result1 = pane_read(worker, lastN: 200)
-```
-
-**Turn 3 — verify, advance the todo, delegate task 2:**
-
-```
-summary1 = Read("/tmp/migration-1-summary.md")
-# Quick orchestrator-side check that the migration looks right
-
-todo_manager(action: "move_to_task", moveToTask: "Refactor API routes to use PaymentIntents")
-
-pane_write(worker, """
-Migration task 2 of 5: Refactor API routes.
-
-Read the migration created in step 1: $(cat /tmp/migration-1-file.txt)
-Update src/app/api/checkout/* to create PaymentIntents instead of Checkout sessions.
-Preserve the existing public API surface where possible — minimize breaking changes.
-
-Files modified → /tmp/migration-2-files.txt
-Summary → /tmp/migration-2-summary.md
-""")
-pane_wait_idle(worker, timeoutMs: 900000)   # 15 min — API refactor is bigger
-```
-
-**Continue the pattern through task 5.** Between each, the orchestrator:
-1. Reads the worker's summary
-2. Surfaces anything notable to the user (or asks for input if there's a decision)
-3. Calls `move_to_task` so the visible list advances
-4. Delegates the next task
-
-**Final turn:**
-
-```
+worker = <worker-id do system prompt, ou pane_list()>
+# Por etapa:
+pane_write(worker, mode: "handoff", task: "<etapa N autocontida: estado atual, alvo, outputs em /tmp/migration-N-*.md>")
+pane_wait_idle(worker, timeoutMs: 600000-900000)
+Read("/tmp/migration-N-summary.md")           # verificação do orchestrator
+todo_manager(action: "move_to_task", ...)     # avança o visível — não batche
+# ... repetir; ao final:
 todo_manager(action: "mark_all_done")
 ```
 
-### Why use the worker pane instead of doing it inline
-
-Each task is 5-15 minutes of focused work — that's a long time for the orchestrator to be silent. The worker does the work; the orchestrator stays free to surface progress, answer user questions, and make decisions between tasks. The user sees the todo list advance in real time and gets summaries from the orchestrator without waiting on a 60-minute monologue.
+O worker trabalha; o orchestrator fica livre para reportar, responder o usuário e decidir entre etapas.
 
 ---
 
 ## Recipe 5: Parallel fan-out with async fan-in (E32)
 
-### When this fits
-
 > User: "Audit these 4 modules in parallel and summarize findings when each finishes."
 
-You need N independent workers, but the orchestrator should stay responsive — no blocking on four `pane_wait_idle` calls. Workers return structured handoffs; the orchestrator polls the inbox.
-
-**Use this instead of `squad_run_*` when:** work is ad hoc, no template/gates, and you want vault-backed deliverables without parsing PTY output.
-
-### Sequence
-
-**Turn 1 — spawn workers, batch delegate:**
+N workers independentes, orchestrator não bloqueia em N× `pane_wait_idle`. Workers entregam handoffs estruturados; orchestrator faz poll no inbox.
 
 ```
-panes = []
-for module in ["auth", "billing", "webhooks", "admin"]:
-  panes.push(pane_spawn(model: "claude-sonnet-4-6", role: "synko-qa"))
+# Turn 1 — spawn + batch delegate
+panes = ["auth","billing","webhooks","admin"].map(m =>
+  pane_spawn(model: <workhorse>, role: "synko-qa"))
 
 pane_write_many(writes: panes.map((paneId, i) => ({
-  paneId,
-  mode: "handoff",
-  storyId: "E32-audit",
-  task: `Audit src/${modules[i]}/. Output findings to vault via handoff_submit when done.
-Include: severity-ranked issues, file paths, suggested fixes. No code changes.`,
+  paneId, mode: "handoff", storyId: "E32-audit",
+  task: `Audit src/${modules[i]}/: severity-ranked issues, file paths, suggested fixes. No code changes.
+When finished: handoff_submit(summary, status, storyId: "E32-audit", fileList).`,
 })))
-```
 
-**Worker brief (include in each task):**
-
-```
-When finished, call handoff_submit(
-  summary: "<one-line outcome>",
-  status: "completed" | "blocked" | "failed",
-  storyId: "E32-audit",
-  fileList: [...],
-)
-```
-
-**Turn 2 — orchestrator continues other work, then poll:**
-
-```
+# Turn 2 — orchestrator segue com outro trabalho, depois:
 entries = handoff_list(storyId: "E32-audit", sinceMinutes: 60)
-# When count matches expected workers:
-for entry in entries:
-  detail = handoff_read(entryId: entry.entryId)
+# quando count == workers esperados:
+handoff_read(entryId: ...)   # packet completo, se necessário
 ```
 
-Integrate summaries manually — no auto-merge. For live debugging, `pane_wait_idle` + `pane_read` on one pane still works.
+Integração é manual — sem auto-merge. Para debug ao vivo de um pane específico, `pane_wait_idle` + `pane_read` ainda vale.
 
-### vs Recipe 2
-
-Recipe 2 uses sync `pane_wait_idle` + filesystem artifacts. Recipe 5 uses vault inbox + `handoff_list` — better when deliverables are structured and the orchestrator shouldn't block.
-
-### vs squad runs
-
-`squad_run_start` with templates, quality gates, and memory policy is still the right path for repeatable multi-phase workflows (e.g. brownfield-discovery). Recipe 5 is lightweight ad hoc parallel.
+**vs Recipe 2:** lá, sync + artefatos no filesystem; aqui, vault inbox — melhor quando deliverables são estruturados e o orchestrator não deve bloquear.
+**vs squad runs:** `squad_run_start` com template, gates e memory policy continua sendo o caminho para workflows repetíveis multi-fase.
 
 ---
 
@@ -356,11 +142,11 @@ Recipe 2 uses sync `pane_wait_idle` + filesystem artifacts. Recipe 5 uses vault 
 
 | Situation | Recipe |
 |-----------|--------|
-| 2+ independent perspectives on same input | Recipe 3 (multi-model brainstorm) |
-| Different cognitive jobs on related inputs | Recipe 1 (critique + fix) |
-| Independent work products, shared spec | Recipe 2 (doc + impl in parallel) |
-| N parallel workers, orchestrator stays unblocked | Recipe 5 (pane_write_many + handoff_list) |
-| Sequential project, visible milestones, heavy work | Recipe 4 (worker + todo_manager) |
+| 2+ independent perspectives on same input | 3 (multi-model brainstorm) |
+| Different cognitive jobs, output de um alimenta o outro | 1 (critique → fix, sequenciado) |
+| Independent work products, shared spec | 2 (doc + impl in parallel) |
+| N parallel workers, orchestrator stays unblocked | 5 (`pane_write_many` + `handoff_list`) |
+| Sequential project, visible milestones, heavy work | 4 (worker + `todo_manager`) |
 | One small task | None — just do it inline |
 
-The shape of the work picks the recipe. If none of these patterns fit, you probably don't need orchestration.
+The shape of the work picks the recipe. If none fit, you probably don't need orchestration.
