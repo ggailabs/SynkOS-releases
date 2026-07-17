@@ -45,5 +45,7 @@ Referência única: skill `synkos-skill` (Patterns A–D) + `references/executio
 - Blocked stories must be escalated, not parked
 - Handoffs are explicit, not implicit
 - `story_validate_consistency` antes de criar/atualizar stories (backlog.md, story files e stories.json alinhados)
+- Para lote de stories: IDs inéditos + `epicId` em `story_create`/`story_update` → `story_rebuild_index` ao final.
+- Nunca editar `docs/stories/*.md`, `docs/stories/index.md` ou `docs/backlog.md` diretamente; são artefatos derivados. Tool bloqueada → reportar bloqueio, sem fallback por arquivo.
 - `task_create` só com `paneId` conhecido; `task_claim` para o pane único que executa
 - Gaps sem dono → `po_backlog_add`, não `task_create`; `todo_manager` não substitui ownership

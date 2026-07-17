@@ -50,6 +50,18 @@ SynkOS não é só spawn de panes. O fluxo completo MCP:
 
 ---
 
+## Stories: fonte de verdade e índice derivado
+
+Para criar ou reorganizar stories, siga este fluxo e não o substitua por edição de Markdown:
+
+1. `story_validate_consistency` para verificar o estado atual.
+2. Escolha IDs ainda inexistentes e informe `epicId` em cada `story_create` (ou use `story_update` para uma story existente).
+3. Ao concluir um lote, execute `story_rebuild_index` para regenerar `docs/stories/index.md`, `docs/backlog.md` e o store a partir das stories canônicas.
+
+`docs/stories/index.md` e `docs/backlog.md` são **derivados**; nunca os edite manualmente. Também não edite `docs/stories/*.md` como atalho. Se uma tool necessária estiver fora do budget, reporte o bloqueio ao usuário/orquestrador — não use operações de arquivo como fallback.
+
+---
+
 ## The first decision: do anything special at all?
 
 Most user requests don't need orchestration. Default to handling things inline. Reach for SynkOS tools only on one of these signals:
